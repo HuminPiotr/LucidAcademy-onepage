@@ -1,0 +1,514 @@
+/* =========================================
+   1. GOOGLE FONTS (Sora)
+========================================= */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap");
+
+/* =========================================
+   2. SINGLE SOURCE OF TRUTH (VARIABLES)
+========================================= */
+:root {
+  --bg-dark: #0a0a10;     /* Główne, bardzo ciemne tło */
+  --bg-card: #151520;     /* Tło kart/pudełek */
+  --text-main: #e0e0e0;   /* Jasnoszary tekst główny */
+  --text-heading: #ffffff; /* Białe nagłówki */
+  --accent-purple: #6b21a8; /* Ciemny fiolet — akcenty, cienie */
+  --accent-neon: #d946ef;   /* Neonowy fiolet — CTA, podświetlenia */
+  --nav-height: 80px;
+}
+
+/* =========================================
+   3. CSS RESET & GLOBAL STYLES
+========================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 100%; /* Baza dla 'rem' */
+  scroll-behavior: smooth; /* Wymóg miękkiego przewijania */
+}
+
+body {
+  font-family: "Sora", sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  line-height: 1.6; /* Wymóg czytelności */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* KRYTYCZNY FIX: Przyklejona nawigacja nie ucina sekcji */
+section {
+  scroll-margin-top: var(--nav-height);
+  position: relative; /* Przyda się do pozycjonowania np. tła absolutnego */
+}
+
+/* Podstawowe resety hiperłączy i obrazków */
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* =========================================
+   4. NAWIGACJA STICKY
+========================================= */
+
+#site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav {
+  height: var(--nav-height);
+  background: rgba(10, 10, 16, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo */
+.nav-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-heading);
+  transition: color 0.3s ease;
+}
+
+.nav-logo:hover {
+  color: var(--accent-neon);
+}
+
+.nav-logo-accent {
+  color: var(--accent-neon);
+}
+
+/* Lista linków */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  list-style: none;
+}
+
+.nav-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-main);
+  position: relative;
+  padding-bottom: 3px;
+  transition: color 0.3s ease;
+}
+
+/* Neonowa kreska pod linkiem */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--accent-neon);
+  box-shadow: 0 0 6px var(--accent-neon);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--accent-neon);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+.nav-link.active {
+  color: var(--accent-neon);
+}
+
+/* Hamburger */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-heading);
+  border-radius: 2px;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s ease,
+              width 0.3s ease;
+  transform-origin: center;
+}
+
+/* Hamburger → X */
+.nav-hamburger.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-hamburger.is-open span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+.nav-hamburger.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* =========================================
+   5. TYMCZASOWE WYSOKOŚCI SEKCJI (placeholder)
+   Zostaną zastąpione przy budowie treści bloków
+========================================= */
+
+#misja,
+#uniwersytet,
+#oferta,
+#co-robimy,
+#zespol,
+#kontakt {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================
+   7. SEKCJA HERO — EDITORIAL, SINGLE SCREEN
+========================================= */
+
+/* Dokładnie jeden ekran: wysokość = viewport minus sticky nav */
+#hero {
+  height: calc(100vh - var(--nav-height));
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Tło: czyste --bg-dark + subtelny wzór siatki (5-10% opacity) */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(107, 33, 168, 1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107, 33, 168, 1) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.07;
+}
+
+/* Główny blok — LEFT ALIGNED */
+.hero-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5vh 4rem 5vh;
+  text-align: left;
+}
+
+/* ---- Label "FUNDACJA" z animowaną kreską ---- */
+.hero-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.hero-label-dash {
+  display: block;
+  height: 1px;
+  background: var(--accent-neon);
+  opacity: 0.6;
+  animation: dash-grow 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.4s;
+  width: 0;
+}
+
+@keyframes dash-grow {
+  from { width: 0; }
+  to   { width: 2.5rem; }
+}
+
+.hero-label-text {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.45em;
+  color: var(--accent-neon);
+  opacity: 0;
+  animation: hero-fade-in 0.5s ease both 0.75s;
+}
+
+/* ---- H1 — kontrast wagi: thin white vs. bold neon ---- */
+.hero-title {
+  display: block;
+  margin-bottom: 1.5rem;
+  line-height: 0.9;
+}
+
+/* Maska: overflow hidden — tekst wysuwa się spod krawędzi */
+.hero-title-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+/* Maska bez clippingu — dla elementów z text-shadow glow */
+.hero-title-mask--open {
+  overflow: visible;
+  padding: 0.1em 0 0.2em;
+}
+
+.hero-title-word {
+  display: block;
+  font-size: clamp(3.5rem, 9vw, 8.5rem);
+}
+
+/* "Lucid" — weight 300, biały, szeroki tracking: eteryczny, przestrzenny */
+.hero-title-word--lucid {
+  font-weight: 300;
+  color: var(--text-heading);
+  letter-spacing: 0.04em;
+  animation: slide-from-below 1s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+}
+
+/* "Academy" — weight 700, neon, ciasny tracking: potężny, pulsujący */
+.hero-title-word--academy {
+  font-weight: 700;
+  color: var(--accent-neon);
+  letter-spacing: -0.04em;
+  /* fade-up zamiast slide-from-below — nie wymaga overflow:hidden */
+  animation:
+    hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both    0.36s,
+    neon-pulse   3.5s ease-in-out                    infinite 1.5s;
+}
+
+@keyframes slide-from-below {
+  from { transform: translateY(112%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 25px rgba(217, 70, 239, 0.5),
+      0 0 55px rgba(217, 70, 239, 0.22);
+  }
+  50% {
+    text-shadow:
+      0 0 40px rgba(217, 70, 239, 0.75),
+      0 0 85px rgba(217, 70, 239, 0.35),
+      0 0 130px rgba(217, 70, 239, 0.12);
+  }
+}
+
+/* ---- Tagline ---- */
+.hero-tagline-overflow {
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.hero-tagline {
+  font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: var(--text-main);
+  animation: slide-from-below 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.55s;
+}
+
+/* ---- Opis ---- */
+.hero-description {
+  font-size: clamp(0.85rem, 1.2vw, 0.95rem);
+  line-height: 1.85;
+  color: var(--text-main);
+  max-width: 480px;
+  opacity: 0;
+  animation: hero-fade-in 0.7s ease both 0.8s;
+}
+
+/* ---- Przyciski CTA ---- */
+.hero-cta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 2rem;
+  opacity: 0;
+  animation: hero-fade-in 0.7s ease both 1s;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border: 1px solid var(--accent-neon);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out,
+              box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+.btn-primary {
+  background: transparent;
+  color: var(--accent-neon);
+  animation: breathing-glow 3.5s ease-in-out infinite;
+}
+
+.btn-primary:hover {
+  background: rgba(107, 33, 168, 0.45);
+  box-shadow: 0 0 20px rgba(107, 33, 168, 0.4);
+  animation: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-main);
+  border-color: rgba(224, 224, 224, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(107, 33, 168, 0.2);
+  border-color: var(--accent-neon);
+  color: var(--accent-neon);
+  box-shadow: 0 4px 16px rgba(107, 33, 168, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Animacja "oddychającego" przycisku CTA */
+@keyframes breathing-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(217, 70, 239, 0.2),  0 0 20px rgba(217, 70, 239, 0.07); }
+  50%       { box-shadow: 0 0 18px rgba(217, 70, 239, 0.5), 0 0 40px rgba(217, 70, 239, 0.15); }
+}
+
+@keyframes hero-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* =========================================
+   6. RESPONSIVE — MOBILE NAV (< 768px)
+========================================= */
+
+@media (max-width: 767px) {
+  .nav-hamburger {
+    display: flex;
+  }
+
+  .nav-links {
+    position: absolute;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0 2rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(217, 70, 239, 0.15);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                padding 0.35s ease;
+  }
+
+  .nav-links.is-open {
+    max-height: 420px;
+    padding: 1.25rem 2rem 1.75rem;
+  }
+
+  .nav-links li {
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .nav-links li:last-child {
+    border-bottom: none;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 0.85rem 0;
+    font-size: 0.8rem;
+  }
+
+  /* Hero mobile */
+  #hero {
+    height: auto;
+    min-height: calc(100vh - var(--nav-height));
+    align-items: flex-start;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .hero-content {
+    padding: 0 1.5rem;
+  }
+
+  .hero-title-word--lucid {
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.88);
+  }
+
+  .hero-description br {
+    display: none;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
