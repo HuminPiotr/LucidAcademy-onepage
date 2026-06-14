@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-13T00:00:00.000Z",
+  "title": "Design System: Lucid Academy",
+  "extensions": {
+    "colorMeta": {
+      "violet": { "role": "primary", "displayName": "Lucid Violet", "canonical": "#7C4DDB", "tonalRamp": ["#1A0E3A", "#2A1A57", "#3C2480", "#4C26AD", "#6238C6", "#7C4DDB", "#9A72E6", "#C2A6F2", "#E5D8FA"] },
+      "lilac": { "role": "primary", "displayName": "Lilac", "canonical": "#B088F4", "tonalRamp": ["#2A1B47", "#3C2A66", "#523A8C", "#6B4FB0", "#8A6BD4", "#B088F4", "#C7A8F8", "#DECCFB", "#F0E6FE"] },
+      "violet-deep": { "role": "primary", "displayName": "Violet Deep", "canonical": "#4C26AD", "tonalRamp": ["#160A33", "#22104D", "#2F1668", "#3C1E88", "#4C26AD", "#6238C6", "#7E55D9", "#A485E8", "#CDBAF3"] },
+      "neon-pink": { "role": "secondary", "displayName": "Neon Pink", "canonical": "#D85CC8", "tonalRamp": ["#3A1233", "#561B4C", "#762668", "#9A3186", "#BE44A6", "#D85CC8", "#E483D7", "#EFAEE6", "#F8D8F4"] },
+      "hot-pink": { "role": "secondary", "displayName": "Hot Pink", "canonical": "#FF4BF2", "tonalRamp": ["#400A3D", "#5F0F5A", "#82147B", "#A8189F", "#D02FC6", "#FF4BF2", "#FF7CF6", "#FFAEFA", "#FFD8FD"] },
+      "cyan": { "role": "tertiary", "displayName": "Cyan", "canonical": "#4BFFFF", "tonalRamp": ["#0A3D3D", "#0F5A5A", "#147B7B", "#199F9F", "#2FCABF", "#4BFFFF", "#7CFFFF", "#AEFFFF", "#D8FFFF"] },
+      "green": { "role": "tertiary", "displayName": "Signal Green", "canonical": "#7AFF84", "tonalRamp": ["#0E3A12", "#155A1B", "#1D7B26", "#269F31", "#4BCA56", "#7AFF84", "#A2FFA9", "#C7FFCB", "#E5FFE8"] },
+      "bg-0": { "role": "neutral", "displayName": "Void", "canonical": "#07040F", "tonalRamp": ["#07040F", "#0B0716", "#13072D", "#1E1142", "#2A1A57", "#3A2A6E", "#4F3D8C", "#7263AE", "#A89CD0"] },
+      "text-primary": { "role": "neutral", "displayName": "Moonlight", "canonical": "#F7F2FF", "tonalRamp": ["#2A2440", "#3D3658", "#544C75", "#6E6593", "#8B82B2", "#AFA3CC", "#D8CFF0", "#ECE5FA", "#F7F2FF"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Wyłącznie Hero <h1>. Kontrast wagi w obrębie tytułu (300 / 700) jest sygnaturą." },
+      "headline": { "displayName": "Headline", "purpose": "Główne nagłówki sekcji <h2>." },
+      "title": { "displayName": "Title", "purpose": "Karty oferty, bloki projektów, podsekcje <h3>." },
+      "lead": { "displayName": "Lead", "purpose": "Leady pod nagłówkami, wprowadzenia, tekst Hero." },
+      "body": { "displayName": "Body", "purpose": "Proza, max 65-75ch. Kolor domyślny Starlight." },
+      "label": { "displayName": "Label / Eyebrow", "purpose": "Etykiety, meta, nawigacja. UPPERCASE, tracked, kolor Lilac/Cyan." }
+    },
+    "shadows": [
+      { "name": "glow-violet", "value": "0 0 24px rgba(124,77,219,0.38), 0 0 64px rgba(124,77,219,0.18)", "purpose": "Domyślna poświata akcentów, ikon, aktywnych elementów." },
+      { "name": "glow-cyan", "value": "0 0 22px rgba(75,255,255,0.28), 0 0 72px rgba(75,255,255,0.12)", "purpose": "Połączenia, linie, punkty technologiczne." },
+      { "name": "glow-pink", "value": "0 0 24px rgba(255,75,242,0.32), 0 0 72px rgba(255,75,242,0.14)", "purpose": "Najmocniejsze akcenty, hover CTA." },
+      { "name": "card-premium", "value": "0 24px 80px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.06)", "purpose": "Unosi karty nad tło; wewnętrzny highlight daje krawędź szkła." }
+    ],
+    "motion": [
+      { "name": "ease-reveal", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Scroll reveal i fade-up: opacity 0→1, translateY 24px→0, 600-900ms." },
+      { "name": "ease-hero", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Wejścia Hero: slide-from-below, rozwijanie kreski." },
+      { "name": "duration-reveal", "value": "750ms", "purpose": "Typowy czas scroll-reveal." },
+      { "name": "node-pulse", "value": "3s", "purpose": "Pulsowanie węzłów sieci: scale 1→1.15→1, nie szybciej niż 2-3s/cykl." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "767px" },
+      { "name": "container-max", "value": "1180px" },
+      { "name": "container-wide", "value": "1360px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Główne CTA. Gradient violet→pink, poświata violet w spoczynku, pink na hover. Max jedno na sekcję.",
+      "html": "<a href=\"#kontakt\" class=\"ds-btn-primary\">Poznaj ofertę</a>",
+      "css": ".ds-btn-primary { display: inline-block; font-family: 'Sora', system-ui, sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; text-decoration: none; padding: 0.85rem 2rem; border: 1px solid rgba(255,255,255,0.16); border-radius: 0.75rem; background: linear-gradient(135deg, #7C4DDB 0%, #D85CC8 60%, #FF4BF2 100%); box-shadow: 0 0 28px rgba(124,77,219,0.34), 0 12px 36px rgba(0,0,0,0.32); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease; } .ds-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(255,75,242,0.36), 0 16px 42px rgba(0,0,0,0.4); } .ds-btn-primary:focus-visible { outline: 2px solid #B088F4; outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Spokojniejsze CTA. Półprzezroczyste tło, fioletowy border, backdrop-blur.",
+      "html": "<a href=\"#kontakt\" class=\"ds-btn-secondary\">Współpracuj z nami</a>",
+      "css": ".ds-btn-secondary { display: inline-block; font-family: 'Sora', system-ui, sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #F7F2FF; text-decoration: none; padding: 0.85rem 2rem; border: 1px solid rgba(176,136,244,0.28); border-radius: 0.75rem; background: rgba(255,255,255,0.045); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease; } .ds-btn-secondary:hover { transform: translateY(-2px); background: rgba(124,77,219,0.20); border-color: #B088F4; } .ds-btn-secondary:focus-visible { outline: 2px solid #B088F4; outline-offset: 3px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Domyślna karta: warstwowe tło, fioletowy border, Card Premium shadow, glow + lift na hover. Nigdy karta w karcie.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card__icon\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3 2 9l10 6 10-6-10-6Z\"/><path d=\"M2 9v6l10 6 10-6V9\"/></svg></div><h3 class=\"ds-card__title\">Edukacja o AI</h3><p class=\"ds-card__body\">Warsztaty i wykłady dopasowane do odbiorcy — od pierwszego kontaktu po tematy społeczno-polityczne.</p></article>",
+      "css": ".ds-card { display: block; max-width: 360px; padding: 2rem; border: 1px solid rgba(176,136,244,0.18); border-radius: 1.5rem; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)), rgba(19,7,45,0.72); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 24px 80px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.06); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), border-color 0.3s ease, box-shadow 0.3s ease; } .ds-card:hover { transform: translateY(-4px); border-color: rgba(176,136,244,0.36); box-shadow: 0 28px 90px rgba(0,0,0,0.42), 0 0 40px rgba(124,77,219,0.12); } .ds-card__icon { width: 3.25rem; height: 3.25rem; display: grid; place-items: center; border-radius: 1rem; margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(124,77,219,0.9), rgba(216,92,200,0.7)); box-shadow: 0 0 28px rgba(124,77,219,0.26); } .ds-card__title { font-family: 'Sora', system-ui, sans-serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; color: #F7F2FF; margin: 0 0 0.6rem; } .ds-card__body { font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; line-height: 1.7; color: #D8CFF0; margin: 0; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Link nawigacji w sticky topbarze. Aktywny stan (Intersection Observer): Lilac + świetlista kreska pod linkiem.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#misja\" class=\"ds-nav-link\">Misja</a><a href=\"#oferta\" class=\"ds-nav-link ds-nav-link--active\">Oferta</a><a href=\"#kontakt\" class=\"ds-nav-link\">Kontakt</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 2.5rem; padding: 1.25rem 2rem; background: rgba(7,4,15,0.72); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(176,136,244,0.16); } .ds-nav-link { position: relative; font-family: 'Sora', system-ui, sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #D8CFF0; text-decoration: none; padding-bottom: 4px; transition: color 0.3s ease; } .ds-nav-link::after { content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 0; background: #B088F4; box-shadow: 0 0 8px #B088F4; transition: width 0.3s cubic-bezier(0.22,1,0.36,1); } .ds-nav-link:hover { color: #B088F4; } .ds-nav-link:hover::after, .ds-nav-link--active::after { width: 100%; } .ds-nav-link--active { color: #B088F4; } .ds-nav-link:focus-visible { outline: 2px solid #B088F4; outline-offset: 4px; }"
+    },
+    {
+      "name": "Eyebrow Label",
+      "kind": "chip",
+      "refersTo": "nav-link",
+      "description": "Nazwana etykieta (np. 'FUNDACJA' w Hero). NIE nad każdą sekcją — tylko gdy wnosi informację.",
+      "html": "<p class=\"ds-eyebrow\"><span class=\"ds-eyebrow__dash\"></span>Fundacja</p>",
+      "css": ".ds-eyebrow { display: inline-flex; align-items: center; gap: 0.75rem; font-family: 'Sora', system-ui, sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #B088F4; margin: 0; } .ds-eyebrow__dash { display: block; width: 2.5rem; height: 1px; background: #B088F4; opacity: 0.7; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "card",
+      "description": "Status projektu. Signal Green = działa/wdrożone; Cyan = w realizacji. Jedyne miejsce dla Green.",
+      "html": "<span class=\"ds-status ds-status--live\">Działa już teraz</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'Sora', system-ui, sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.35rem 0.85rem; border-radius: 999px; } .ds-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; } .ds-status--live { color: #7AFF84; background: rgba(122,255,132,0.10); border: 1px solid rgba(122,255,132,0.28); } .ds-status--live::before { background: #7AFF84; box-shadow: 0 0 8px #7AFF84; } .ds-status--wip { color: #4BFFFF; background: rgba(75,255,255,0.08); border: 1px solid rgba(75,255,255,0.28); } .ds-status--wip::before { background: #4BFFFF; box-shadow: 0 0 8px #4BFFFF; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Światło, które staje się siecią",
+    "overview": "Lucid Academy to opowieść o tym, jak z niepewności wobec AI wyłania się zrozumienie, a ze zrozumienia powstaje sieć ludzi, instytucji, edukacji i projektów. Wizualnie zaczynamy w ciemności i wypuszczamy z niej światło — pojedynczy świetlisty impuls, który prowadzi przez stronę i rozgałęzia się w sieć. Estetyka to ciemna, świetlista metropolia przyszłości: warstwowa głębia, subtelny glow, spokojne tempo, premium-cisza. Światło znaczy zrozumienie, więc świeci punktowo i z intencją — nigdy wszędzie naraz. System odrzuca zimny startup SaaS, urzędową stronę instytucji oraz dystopijny cyberpunk i sterylne 'AI lab'.",
+    "keyCharacteristics": [
+      "Ciemna baza (#07040F–#2A1A57), światło jako rzadki, celowy akcent",
+      "Jedna rodzina typograficzna (Sora) niosąca cały system kontrastem wagi i skali",
+      "Glow zamiast klasycznych cieni — punktowo, nigdy na każdym elemencie",
+      "Spokojne, opowiadające historię animacje; pełne wsparcie reduced-motion",
+      "Spójna metafora 'linia → sieć' prowadząca przez wszystkie sekcje",
+      "Zaufanie i czytelność przed efektem; WCAG 2.1 AA jako zobowiązanie"
+    ],
+    "rules": [
+      { "name": "The Punctual Glow Rule", "body": "Światło świeci punktowo i z intencją. Jeśli wszystko świeci, nic nie świeci — Hot Pink i Cyan pojawiają się na ≤10% dowolnego ekranu.", "section": "colors" },
+      { "name": "The Long-Text Rule", "body": "Długie teksty nigdy nie są czysto białe ani neonowe. Domyślny kolor prozy to Starlight (#D8CFF0).", "section": "colors" },
+      { "name": "The Green-Means-Status Rule", "body": "Signal Green ma jedno znaczenie: pozytywny status. Nigdy jako CTA ani kolor marki.", "section": "colors" },
+      { "name": "The One-Family Rule", "body": "Cała strona to Sora. Kontrast robimy wagą i skalą, nie nową rodziną.", "section": "typography" },
+      { "name": "The Eyebrow-Discipline Rule", "body": "Eyebrow nie pojawia się nad każdą sekcją. Hero ma jedną nazwaną etykietę; poza tym tylko gdy wnosi informację.", "section": "typography" },
+      { "name": "The Glow-Not-Shadow Rule", "body": "Domyślnie poświata, nie cień. Czarny cień tylko pod kartami premium dla separacji od tła.", "section": "elevation" },
+      { "name": "The Restrained-Glow Rule", "body": "Nie każdy element świeci. Glow jest stanem (hover, aktywność, kluczowy węzeł), nie domyślną dekoracją.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do trzymać ciemną bazę jako powierzchnię marki; światło dawkować punktowo.",
+      "Do budować hierarchię kontrastem wagi i skali jednej rodziny Sora.",
+      "Do używać poświaty zamiast szarych cieni; czarny cień tylko pod kartami premium.",
+      "Do kolorować długą prozę na Starlight (#D8CFF0), nie na czysto biało ani neonowo.",
+      "Do weryfikować kontrast ≥4.5:1 dla tekstu (≥3:1 dla dużego).",
+      "Do dać każdej animacji wariant prefers-reduced-motion.",
+      "Do kontakt wyłącznie przez mailto:/tel:; widoczny focus state na wszystkim interaktywnym."
+    ],
+    "donts": [
+      "Don't projektować jak zimny startup SaaS — żadnych hero-metryk, identycznych siatek kart, żargonu.",
+      "Don't schodzić w urzędową estetykę instytucji ani sterylne 'AI lab' bez ciepła.",
+      "Don't robić dystopijnego cyberpunku: chaos neonów, azjatyckie znaki, glitch, klimat gamingowy.",
+      "Don't używać gradient text (background-clip: text) — emfaza tylko przez wagę, rozmiar i kolor jednolity.",
+      "Don't powtarzać eyebrow nad każdą sekcją.",
+      "Don't używać glassmorphism dekoracyjnie — tylko celowo (topbar, karty).",
+      "Don't zagnieżdżać kart w kartach ani pakować nadmiaru tekstu w jedną kartę.",
+      "Don't używać Signal Green jako CTA ani koloru marki.",
+      "Don't robić migających przycisków, agresywnego pulsowania, scroll-jackingu, parallaxu zasłaniającego treść.",
+      "Don't przekraczać sufitów display: clamp max ≤ 6rem, letter-spacing ≥ -0.04em."
+    ]
+  }
+}
