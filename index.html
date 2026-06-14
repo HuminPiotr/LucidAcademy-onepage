@@ -142,52 +142,201 @@
       </section>
 
       <!-- =============================================
-         SEKCJA: MISJA — Treść: Blok 2
+         TIMELINE — narracyjna oś (linia światła)
+         Oś biegnie środkiem; rysuje się ze scrollem (JS ustawia
+         --line-progress). Sekcje układają się naprzemiennie wokół osi,
+         a węzły zapalają się, gdy linia do nich dochodzi.
     ============================================== -->
-      <section id="misja" aria-labelledby="misja-heading">
-        <!-- Miejsce na timeline misji w v1.5 -->
-        <h2 id="misja-heading">Misja</h2>
-      </section>
+      <div class="timeline">
+        <!-- Oś światła: bazowa ścieżka + świecące wypełnienie + głowa -->
+        <div class="timeline-line" aria-hidden="true">
+          <span class="timeline-line__fill"></span>
+          <span class="timeline-line__head"></span>
+        </div>
 
-      <!-- =============================================
-         SEKCJA: UNIWERSYTET — Treść: Blok 3
-    ============================================== -->
-      <section id="uniwersytet" aria-labelledby="uniwersytet-heading">
-        <!-- Miejsce na Slider w v1.5 -->
-        <h2 id="uniwersytet-heading">Uniwersytet</h2>
-      </section>
+        <!-- =============================================
+           SEKCJA: MISJA — Treść: Blok 2
+           Linia rozdziela się na dwa filary (SVG fork),
+           a następnie splata w węzeł scalenia.
+      ============================================== -->
+        <section id="misja" aria-labelledby="misja-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
 
-      <!-- =============================================
-         SEKCJA: OFERTA — Treść: Blok 4
-    ============================================== -->
-      <section id="oferta" aria-labelledby="oferta-heading">
-        <!-- Miejsce na rozszerzoną siatkę ofert w v1.5 -->
-        <h2 id="oferta-heading">Oferta</h2>
-      </section>
+          <div class="misja-content">
+            <header class="misja-header">
+              <h2 id="misja-heading">Po&nbsp;co jesteśmy</h2>
+              <p class="misja-lead">
+                Fundacja Lucid Academy łączy edukację o sztucznej inteligencji
+                z troską o kulturę i relacje międzyludzkie. Uczymy korzystać
+                z AI świadomie, krytycznie i twórczo; jednocześnie wspieramy
+                kulturę oraz wspólnotę jako przestrzeń, w której technologia
+                odzyskuje ludzki wymiar.
+              </p>
+              <p class="misja-belief">
+                Wierzymy, że AI najlepiej służy tam, gdzie pomaga ludziom się
+                spotykać, rozumieć i działać razem. Nie tam, gdzie ten kontakt
+                zastępuje. To przekonanie wyznacza wszystko, co robimy.
+              </p>
+            </header>
 
-      <!-- =============================================
-         SEKCJA: CO ROBIMY — Treść: Blok 5
-    ============================================== -->
-      <section id="co-robimy" aria-labelledby="co-robimy-heading">
-        <!-- Miejsce na interaktywną mapę działań w v1.5 -->
-        <h2 id="co-robimy-heading">Co Robimy</h2>
-      </section>
+            <div class="misja-pillars">
+              <!-- SVG: prostokątny fork (ostre kąty, bez bezierów).
+                   Pozioma belka łączy dwie gałęzie, węzły na jej końcach.
+                   pathLength="1" → stroke-dashoffset bez getTotalLength(). -->
+              <svg class="misja-fork-svg" aria-hidden="true"
+                   viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="fork-gradient" gradientUnits="userSpaceOnUse"
+                                  x1="0" y1="0" x2="0" y2="100">
+                    <stop offset="0%"   stop-color="#b088f4"/>
+                    <stop offset="50%"  stop-color="#7c4ddb"/>
+                    <stop offset="100%" stop-color="#ff4bf2"/>
+                  </linearGradient>
+                  <!-- Glow na ścieżkach (nie na cover rect) — filter per-element.
+                       stdDeviation nieco wyższy dla kompensacji przy płytkim sy. -->
+                  <filter id="fork-glow" x="-50%" y="-10%" width="200%" height="120%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <!-- Zakrycie głównej linii timeline -->
+                <rect class="misja-fork-cover" x="48.6" y="0"
+                      width="2.8" height="100"/>
+                <!-- Lewa gałąź: środek → belka → lewy bok → dół → powrót. -->
+                <path class="misja-fork-path" pathLength="1"
+                  d="M50,0 L50,10 L3,10 L3,92 L50,92 L50,100"
+                  stroke="url(#fork-gradient)" filter="url(#fork-glow)"/>
+                <!-- Prawa gałąź (lustro) -->
+                <path class="misja-fork-path" pathLength="1"
+                  d="M50,0 L50,10 L97,10 L97,92 L50,92 L50,100"
+                  stroke="url(#fork-gradient)" filter="url(#fork-glow)"/>
+              </svg>
 
-      <!-- =============================================
-         SEKCJA: ZESPÓŁ — Treść: Blok 6
-    ============================================== -->
-      <section id="zespol" aria-labelledby="zespol-heading">
-        <!-- Miejsce na rozwijane bio w v1.5 -->
-        <h2 id="zespol-heading">Zespół</h2>
-      </section>
+              <!-- Węzły jako elementy CSS — pozycja odpowiada SVG bar y=10%.
+                   SVG circles byłyby spłaszczone przez preserveAspectRatio="none". -->
+              <span class="misja-fork-node misja-fork-node--left" aria-hidden="true"></span>
+              <span class="misja-fork-node misja-fork-node--right" aria-hidden="true"></span>
 
-      <!-- =============================================
-         SEKCJA: KONTAKT — Treść: Blok 7
-    ============================================== -->
-      <section id="kontakt" aria-labelledby="kontakt-heading">
-        <!-- Miejsce na formularz kontaktowy w v1.5 -->
-        <h2 id="kontakt-heading">Kontakt</h2>
-      </section>
+              <div class="misja-pillar-card">
+                <span class="misja-filar-label">Filar 1</span>
+                <h3>Świadoma edukacja o&nbsp;AI</h3>
+                <p>
+                  Pokazujemy, jak korzystać ze sztucznej inteligencji — bez
+                  technologicznego zachwytu i bez paniki. Uczymy nie tylko obsługi
+                  narzędzi, ale też tego, jak o AI myśleć i rozmawiać: co realnie
+                  zmienia w pracy, edukacji, relacjach i kulturze. Wierzymy, że
+                  świadomy dostęp do tej wiedzy i technologii oraz umiejętność
+                  krytycznego myślenia o AI to dziś kluczowe kwestie, które
+                  w niedalekiej przyszłości mogą wpływać na nierówności
+                  społeczne.
+                </p>
+              </div>
+
+              <div class="misja-pillar-card">
+                <span class="misja-filar-label">Filar 2</span>
+                <h3>Kultura i wspólnota</h3>
+                <p>
+                  Wspieramy lokalną kulturę i technologię obywatelską — projekty,
+                  w których AI jest narzędziem, nie celem. Sieci współpracy
+                  instytucji kultury, działania w przestrzeni dzielnicy, narzędzia
+                  tworzone z myślą o konkretnej społeczności. Najlepsza
+                  technologia to ta, która wzmacnia więzi między ludźmi i pomaga
+                  im wspólnie działać.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Węzeł scalenia — dwie gałęzie łączą się z powrotem w jedną linię -->
+          <span class="misja-merge-node" aria-hidden="true"></span>
+        </section>
+
+        <!-- =============================================
+           SEKCJA: UNIWERSYTET — Treść: Blok 3
+      ============================================== -->
+        <section id="uniwersytet" aria-labelledby="uniwersytet-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <!-- Miejsce na Slider w v1.5 -->
+          <div class="section-card">
+            <span class="section-card__eyebrow">02 — Wiedza</span>
+            <h2 id="uniwersytet-heading">Uniwersytet</h2>
+            <p class="section-card__text">
+              Otwarta przestrzeń nauki o AI — kursy, warsztaty i materiały dla
+              tych, którzy chcą rozumieć, nie tylko używać.
+            </p>
+          </div>
+        </section>
+
+        <!-- =============================================
+           SEKCJA: OFERTA — Treść: Blok 4
+      ============================================== -->
+        <section id="oferta" aria-labelledby="oferta-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <!-- Miejsce na rozszerzoną siatkę ofert w v1.5 -->
+          <div class="section-card">
+            <span class="section-card__eyebrow">03 — Współpraca</span>
+            <h2 id="oferta-heading">Oferta</h2>
+            <p class="section-card__text">
+              Szkolenia, facylitacja i wdrożenia dla szkół, NGO, samorządów i
+              instytucji kultury — dopasowane do realnych potrzeb.
+            </p>
+          </div>
+        </section>
+
+        <!-- =============================================
+           SEKCJA: CO ROBIMY — Treść: Blok 5
+      ============================================== -->
+        <section id="co-robimy" aria-labelledby="co-robimy-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <!-- Miejsce na interaktywną mapę działań w v1.5 -->
+          <div class="section-card">
+            <span class="section-card__eyebrow">04 — Działanie</span>
+            <h2 id="co-robimy-heading">Co Robimy</h2>
+            <p class="section-card__text">
+              Projekty społeczne, wydarzenia i programy edukacyjne, które
+              przekładają wiedzę o technologii na konkretne zmiany.
+            </p>
+          </div>
+        </section>
+
+        <!-- =============================================
+           SEKCJA: ZESPÓŁ — Treść: Blok 6
+      ============================================== -->
+        <section id="zespol" aria-labelledby="zespol-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <!-- Miejsce na rozwijane bio w v1.5 -->
+          <div class="section-card">
+            <span class="section-card__eyebrow">05 — Ludzie</span>
+            <h2 id="zespol-heading">Zespół</h2>
+            <p class="section-card__text">
+              Edukatorzy, technolodzy i praktycy kultury — ludzie, dla których
+              technologia to narzędzie, a nie cel sam w sobie.
+            </p>
+          </div>
+        </section>
+
+        <!-- =============================================
+           SEKCJA: KONTAKT — Treść: Blok 7
+      ============================================== -->
+        <section id="kontakt" aria-labelledby="kontakt-heading">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <!-- Miejsce na formularz kontaktowy w v1.5 -->
+          <div class="section-card">
+            <span class="section-card__eyebrow">06 — Rozmowa</span>
+            <h2 id="kontakt-heading">Kontakt</h2>
+            <p class="section-card__text">
+              Masz pomysł na współpracę? Napisz do nas —
+              <a href="mailto:kontakt@lucidacademy.pl"
+                >kontakt@lucidacademy.pl</a
+              >.
+            </p>
+          </div>
+        </section>
+      </div>
     </main>
 
     <!-- =============================================
@@ -197,6 +346,8 @@
       <!-- Placeholder stopki -->
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js" defer></script>
     <script src="script.js" defer></script>
   </body>
 </html>

@@ -251,12 +251,13 @@ img {
    5. HERO
 ========================================= */
 #hero {
-  height: 100vh;
+  height: 150vh;
   background: var(--bg-0);
 }
 
 .hero-stage {
-  position: relative;
+  position: sticky;
+  top: 0;
   height: 100vh;
   padding-top: var(--nav-height);   /* nav nakłada się z góry — treść centruje się w dolnej strefie */
   overflow: hidden;
@@ -374,10 +375,10 @@ img {
 .hero-sun--back {
   z-index: 3;
   left: 67%;
-  top: 43%;
+  top: 96%;
   width: clamp(720px, 96vw, 1560px);
   transform: translate(-50%, -50%);
-  opacity: 0.78;
+  opacity: 0.55;
 }
 
 /* Delikatny flare PRZED miastem */
@@ -387,7 +388,7 @@ img {
   top: 72%;
   width: clamp(820px, 110vw, 1760px);
   transform: translate(-50%, -50%);
-  opacity: 0.32;
+  opacity: 0.16;
 }
 
 /* ---- 5. Miasto ---- */
@@ -398,7 +399,7 @@ img {
   z-index: 5;
   width: 65vw;
   pointer-events: none;
-  filter: brightness(var(--city-b, 1.0)) saturate(var(--city-s, 1.05));
+  filter: brightness(var(--city-b, 0.64)) saturate(var(--city-s, 0.90));
   /* Lewa krawędź miasta rozpływa się w ciemność tła */
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.5) 10%, #000 26%);
   mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.5) 10%, #000 26%);
@@ -618,31 +619,419 @@ img {
 }
 
 /* =========================================
-   6. PLACEHOLDERY SEKCJI
-   Zostaną zastąpione przy budowie bloków 2–7
+   6. TIMELINE — linia światła (narracyjna oś)
+   Oś biegnie środkiem, rysuje się ze scrollem (JS ustawia
+   --line-progress: 0–1). Sekcje naprzemiennie wokół osi.
 ========================================= */
-#misja,
-#uniwersytet,
-#oferta,
-#co-robimy,
-#zespol,
-#kontakt {
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.timeline {
+  position: relative;
+  --line-progress: 0;        /* sterowane przez JS (scrub) */
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vh, 6rem) clamp(1.5rem, 4vw, 4rem);
 }
 
-#misja h2,
-#uniwersytet h2,
-#oferta h2,
-#co-robimy h2,
-#zespol h2,
-#kontakt h2 {
-  font-size: clamp(2.2rem, 4.5vw, 4rem);
+/* ---- Oś: bazowa ścieżka ---- */
+.timeline-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  z-index: 1;                /* za kartami */
+  pointer-events: none;
+  /* Ciemna ścieżka bazowa */
+  background: linear-gradient(
+    180deg,
+    transparent 0,
+    var(--border-soft) 6%,
+    var(--border-soft) 94%,
+    transparent 100%
+  );
+}
+
+/* Świecące wypełnienie — rośnie ze scrollem (scaleY) */
+.timeline-line__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top center;
+  transform: scaleY(var(--line-progress));
+  background: linear-gradient(
+    180deg,
+    var(--lilac) 0%,
+    var(--violet) 38%,
+    var(--neon-pink) 72%,
+    var(--hot-pink) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(176, 136, 244, 0.6),
+    0 0 26px rgba(124, 77, 219, 0.4);
+}
+
+/* "Głowa" / kometka na czubku narysowanej części */
+.timeline-line__head {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--line-progress) * 100%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--text-primary);
+  box-shadow:
+    0 0 0 4px rgba(255, 75, 242, 0.18),
+    0 0 14px 3px rgba(255, 75, 242, 0.7),
+    0 0 34px 8px rgba(124, 77, 219, 0.5);
+  /* Ukryta na samej górze (zanim scroll ruszy) i samym dole */
+  opacity: clamp(0, calc(var(--line-progress) * 40), 1);
+  animation: head-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes head-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(255, 75, 242, 0.18),
+      0 0 14px 3px rgba(255, 75, 242, 0.7),
+      0 0 34px 8px rgba(124, 77, 219, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 7px rgba(255, 75, 242, 0.1),
+      0 0 20px 5px rgba(255, 75, 242, 0.85),
+      0 0 48px 12px rgba(124, 77, 219, 0.6);
+  }
+}
+
+/* =========================================
+   Sekcje timeline + węzły + karty
+========================================= */
+.timeline section {
+  position: relative;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  padding: clamp(2rem, 7vh, 5rem) 0;
+}
+
+/* Węzeł na osi — domyślnie przygaszony */
+.timeline-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  background: var(--bg-2);
+  border: 2px solid var(--border-medium);
+  transition:
+    border-color 0.5s ease,
+    box-shadow 0.6s ease,
+    background 0.5s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Węzeł zapalony — gdy linia do niego dochodzi (.is-lit z JS) */
+.timeline-node.is-lit {
+  background: var(--lilac);
+  border-color: var(--hot-pink);
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow:
+    0 0 0 5px rgba(176, 136, 244, 0.12),
+    0 0 16px 3px rgba(255, 75, 242, 0.6),
+    0 0 36px 8px rgba(124, 77, 219, 0.4);
+}
+
+/* Karta-placeholder */
+.section-card {
+  position: relative;
+  z-index: 2;                /* nad osią */
+  width: calc(50% - 3.5rem);
+  padding: clamp(1.75rem, 3vw, 2.75rem);
+  background: rgba(19, 7, 45, 0.55);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  /* Stan startowy do reveal (zdejmowany przez .is-revealed) */
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.section-card.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Naprzemienność (oparta na :nth-of-type — liczy tylko <section>,
+   pomija div.timeline-line): nieparzyste po lewej, parzyste po prawej. */
+.timeline section:nth-of-type(odd) .section-card {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.timeline section:nth-of-type(even) .section-card {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.section-card__eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--lilac);
+  margin-bottom: 0.9rem;
+}
+
+.timeline section h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
   font-weight: 700;
+  line-height: 1.02;
   letter-spacing: -0.04em;
   color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.section-card__text {
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.65;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+  max-width: 46ch;
+}
+
+.section-card__text a {
+  color: var(--lilac);
+  border-bottom: 1px solid var(--border-medium);
+}
+
+.section-card__text a:hover {
+  color: var(--hot-pink);
+  border-bottom-color: var(--hot-pink);
+}
+
+/* =========================================
+   6b. SEKCJA MISJA — pełna implementacja
+       Linia rozdziela się na fork SVG (dwa filary),
+       a następnie splata w węzeł scalenia.
+========================================= */
+
+/* Nadpisanie ogólnego .timeline section dla #misja */
+#misja {
+  display: block;
+  min-height: 100vh;
+  padding: clamp(3.5rem, 8vh, 6rem) 0 clamp(3.5rem, 8vh, 6rem);
+}
+
+/* Węzeł wejścia linii — u góry sekcji, nie w centrum */
+#misja > .timeline-node {
+  top: 0;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+
+/* Węzeł scalenia na dole — lustro węzła wejścia */
+.misja-merge-node {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 2px solid var(--border-medium);
+  transition:
+    border-color 0.5s ease,
+    box-shadow 0.6s ease,
+    background 0.5s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.misja-merge-node.is-lit {
+  background: var(--lilac);
+  border-color: var(--hot-pink);
+  transform: translate(-50%, 50%) scale(1.15);
+  box-shadow:
+    0 0 0 5px rgba(176, 136, 244, 0.12),
+    0 0 16px 3px rgba(255, 75, 242, 0.6),
+    0 0 36px 8px rgba(124, 77, 219, 0.4);
+}
+
+/* Nagłówek sekcji — wycentrowany, nad filarami */
+.misja-content {
+  position: relative;
+  z-index: 2;
+}
+
+.misja-header {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+  padding-bottom: clamp(3rem, 7vh, 5.5rem);
+}
+
+/* Nadpisanie ogólnego h2 wewnątrz #misja */
+#misja h2 {
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.misja-lead {
+  font-size: clamp(1rem, 1.25vw, 1.2rem);
+  line-height: 1.72;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+  margin-bottom: 1.2rem;
+}
+
+.misja-belief {
+  font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+  font-weight: 300;
+  line-height: 1.72;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+/* Grid dwóch filarów */
+.misja-pillars {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  /* Dużo przestrzeni u góry — belka pozioma SVG (y=10%) musi wisieć
+     wyraźnie ponad kartami, a nie nachodziać na ich treść. */
+  padding: clamp(4.5rem, 9vh, 6rem) 0 clamp(2.5rem, 5vh, 4rem);
+}
+
+/* ---- SVG fork ---- */
+.misja-fork-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.misja-fork-cover {
+  fill: var(--bg-0); /* zasłania główną pionową linię timeline */
+}
+
+.misja-fork-path {
+  fill: none;
+  /* non-scaling-stroke: stroke-width w pikselach ekranu, nie w jednostkach viewBox.
+     Bez tego przy preserveAspectRatio="none" pionowe odcinki byłyby ~6× grubsze
+     niż poziome (skala X vs Y jest różna przy szerokim kontenerze). */
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: miter;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--misja-progress, 0));
+}
+
+/* Węzły forka — CSS elements (nie SVG circles) by uniknąć spłaszczenia
+   przez preserveAspectRatio="none" (SVG ellipse zamiast koła). */
+.misja-fork-node {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4bffff;
+  transform: translate(-50%, -50%);
+  top: 10%; /* odpowiada y=10 w viewBox SVG */
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.misja-fork-node--left  { left: 3%; }
+.misja-fork-node--right { left: 97%; }
+
+.misja-fork-node.is-lit {
+  opacity: 1;
+  box-shadow:
+    0 0 0 2px rgba(75, 255, 255, 0.2),
+    0 0 8px #4bffff,
+    0 0 20px rgba(75, 255, 255, 0.45);
+}
+
+/* ---- Karty filarów (glassmorphism) ---- */
+.misja-pillar-card {
+  position: relative;
+  z-index: 2;
+  padding: clamp(1.75rem, 3vh, 2.75rem) clamp(1.5rem, 2.5vw, 2.25rem);
+  background: rgba(11, 7, 22, 0.72);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(176, 136, 244, 0.06) inset,
+    0 24px 48px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.misja-pillar-card.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.misja-pillar-card:nth-of-type(2) {
+  transition-delay: 0.18s;
+}
+
+/* Etykieta filaru */
+.misja-filar-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--lilac);
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.misja-pillar-card h3 {
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-wrap: balance;
+}
+
+.misja-pillar-card p {
+  font-size: clamp(0.875rem, 1vw, 0.975rem);
+  line-height: 1.75;
+  color: var(--text-secondary);
+  text-wrap: pretty;
 }
 
 /* =========================================
@@ -748,12 +1137,12 @@ img {
     opacity: 0.8;
   }
 
-  /* Słońce uproszczone na mobile */
+  /* Słońce uproszczone na mobile — statyczny jasny stan */
   .hero-sun--back {
     left: 50%;
     top: 42%;
     width: 150vw;
-    opacity: 0.55;
+    opacity: 0.72;
   }
 
   .hero-sun--front {
@@ -765,6 +1154,55 @@ img {
   }
   .hero-scroll-cue {
     display: none;
+  }
+
+  /* Misja: pilary w kolumnie, SVG fork schowany (główna linia widoczna) */
+  #misja {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .misja-header {
+    text-align: left;
+    padding-left: 3.5rem;
+    padding-right: 1.25rem;
+  }
+
+  .misja-pillars {
+    grid-template-columns: 1fr;
+    padding-top: 1.5rem; /* reset: fork SVG ukryty na mobile */
+    padding-left: 3.5rem;
+    padding-right: 1.25rem;
+  }
+
+  .misja-fork-svg {
+    display: none;
+  }
+
+  .misja-pillar-card {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Timeline: oś przy lewej krawędzi, karty pełnoszerokie po prawej */
+  .timeline-line {
+    left: 1.5rem;
+  }
+
+  .timeline-node {
+    left: 1.5rem;
+  }
+
+  .section-card,
+  .timeline section:nth-of-type(odd) .section-card,
+  .timeline section:nth-of-type(even) .section-card {
+    width: auto;
+    margin-left: 3.25rem;
+    margin-right: 1.25rem;
+  }
+
+  .timeline section {
+    min-height: auto;
   }
 }
 
@@ -801,5 +1239,34 @@ img {
 
   .hero-scroll-cue {
     display: none;
+  }
+
+  /* Statyczny "jasny" stan gdy animacja wyłączona */
+  .hero-sun--back  { opacity: 0.78; top: 48%; }
+  .hero-sun--front { opacity: 0.28; }
+  .hero-city       { filter: brightness(1.00) saturate(1.06); }
+
+  /* Misja: fork od razu narysowany, karty i węzły widoczne */
+  #misja { --misja-progress: 1; }
+  .misja-fork-path  { stroke-dashoffset: 0; }
+  .misja-fork-node  { opacity: 1; }
+  .misja-pillar-card { opacity: 1; transform: none; }
+  .misja-merge-node  {
+    background: var(--lilac);
+    border-color: var(--hot-pink);
+  }
+
+  /* Timeline: linia od razu w pełni narysowana, węzły zapalone,
+     karty widoczne — bez ruchu/pulsu/głowy */
+  .timeline { --line-progress: 1; }
+  .timeline-line__fill { transform: scaleY(1); }
+  .timeline-line__head { display: none; }
+  .timeline-node {
+    background: var(--lilac);
+    border-color: var(--hot-pink);
+  }
+  .section-card {
+    opacity: 1;
+    transform: none;
   }
 }
