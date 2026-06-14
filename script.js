@@ -142,7 +142,7 @@
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
       const node = e.target.querySelector('.timeline-node');
-      const card = e.target.querySelector('.section-card');
+      const card = e.target.querySelector('.section-card, .content-section');
       if (node) node.classList.add('is-lit');
       if (card) card.classList.add('is-revealed');
       revealObs.unobserve(e.target);
