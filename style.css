@@ -1929,6 +1929,9 @@ img {
   .timeline section {
     min-height: auto;
     display: block;
+    padding: 1.5rem 0;
+    justify-content: auto;
+    align-items: auto;
   }
 }
 
