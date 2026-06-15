@@ -1629,12 +1629,9 @@ img {
     opacity: 0.8;
   }
 
-  /* Słońce uproszczone na mobile — statyczny jasny stan */
+  /* Słońce ukryte na mobile */
   .hero-sun--back {
-    left: 50%;
-    top: 42%;
-    width: 150vw;
-    opacity: 0.72;
+    display: none;
   }
 
   .hero-sun--front {

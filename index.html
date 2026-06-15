@@ -85,14 +85,20 @@
 
           <!-- 4. Warstwa miasta -->
           <div class="hero-city" aria-hidden="true">
-            <img
-              src="assets/city-layer.png"
-              alt=""
-              width="1536"
-              height="1024"
-              decoding="async"
-              fetchpriority="high"
-            />
+            <picture>
+              <source
+                media="(max-width: 767px)"
+                srcset="assets/full_hero_city.png"
+              />
+              <img
+                src="assets/city-layer.png"
+                alt=""
+                width="1536"
+                height="1024"
+                decoding="async"
+                fetchpriority="high"
+              />
+            </picture>
           </div>
 
           <!-- 6. Słońce PRZED miastem — delikatny flare zalewający dół sceny -->
@@ -169,7 +175,7 @@
 
           <div class="misja-content">
             <header class="misja-header">
-              <h2 id="misja-heading">Po&nbsp;co jesteśmy</h2>
+              <h2 id="misja-heading">Po&nbsp;co jesteśmy?</h2>
               <p class="misja-lead">
                 Fundacja Lucid Academy łączy edukację o sztucznej inteligencji z
                 troską o kulturę i relacje międzyludzkie. Uczymy korzystać z AI
@@ -758,8 +764,7 @@
               <h2 id="zespol-heading">Ludzie stojący za Lucid Academy</h2>
               <p class="section-lead">
                 Lucid Academy tworzą ludzie łączący świat akademicki,
-                technologię i działania społeczne. Poznaj osoby, które za tym
-                stoją.
+                technologię i działania społeczne.
               </p>
             </header>
 
