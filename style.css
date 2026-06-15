@@ -1878,9 +1878,12 @@ img {
 
   .content-section,
   .content-section--wide {
-    width: auto;
-    margin-left: 1.5rem;
-    margin-right: 1.5rem;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
   }
 
   .section-intro {
@@ -1898,6 +1901,11 @@ img {
   .duo-grid,
   .contact-grid,
   .founder-profile {
+    grid-template-columns: 1fr;
+  }
+
+  .offer-stack,
+  .learning-modules {
     grid-template-columns: 1fr;
   }
 
