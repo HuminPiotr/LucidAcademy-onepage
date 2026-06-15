@@ -110,16 +110,16 @@
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
       const proxy = { p: 0 };
+      const uniwersytetSection = document.querySelector('#uniwersytet');
+      const endTarget = uniwersytetSection ? '#uniwersytet top top' : 'bottom bottom';
+
       const tween = gsap.to(proxy, {
         p: 1,
         ease: 'none',
         scrollTrigger: {
           trigger: timeline,
-          // 'bottom bottom' kończy dokładnie przy maksymalnym scrollu —
-          // dzięki temu linia DOCHODZI do ostatniej sekcji nawet przy
-          // pustym footerze (brak zapasu miejsca pod timeline).
           start: 'top center',
-          end: 'bottom bottom',
+          end: endTarget,
           scrub: 0.6,
         },
         onUpdate() {
@@ -211,5 +211,197 @@
       tween.kill();
       section.style.removeProperty('--misja-progress');
     };
+  });
+}());
+
+// =============================================
+// LASER SPOTLIGHT — kafelek staje się głównym
+// Każdy kafelek po kliknięciu wyłania się jako solowy panel
+// na środku sceny, z laserową wiązką i scanline.
+// Działa też klawiaturą (Enter/Spacja), strzałki = prev/next,
+// Esc = zamknij. Bez ruszania istniejących animacji GSAP.
+// =============================================
+(function () {
+  // Selektory kafelków, które mają stawać się "głównym" elementem.
+  const TILE_SELECTORS = [
+    '.offer-stack .offer-item',
+    '.learning-modules .text-block',
+    '.duo-grid .text-panel',
+    '.program-list > article',
+    '.activity-roadmap .roadmap-group'
+  ];
+
+  const tiles = [];
+  TILE_SELECTORS.forEach((sel) => {
+    document.querySelectorAll(sel).forEach((el) => {
+      if (!tiles.includes(el)) tiles.push(el);
+    });
+  });
+  tiles.sort((a, b) => {
+    if (a === b) return 0;
+    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
+      ? -1
+      : 1;
+  });
+  if (!tiles.length) return;
+
+  // Uczyń kafelki dostępnymi i klikalnymi.
+  tiles.forEach((tile, i) => {
+    tile.classList.add('laser-tile');
+    tile.setAttribute('tabindex', '0');
+    tile.setAttribute('role', 'button');
+    const title = tile.querySelector('h3, .status-label');
+    const label = title ? title.textContent.trim() : `Kafelek ${i + 1}`;
+    tile.setAttribute('aria-label', `${label} — pokaż jako główny`);
+    tile.dataset.laserIndex = String(i);
+
+    if (tile.dataset.laserArt) {
+      tile.classList.add('has-laser-art');
+      tile.style.setProperty(
+        '--laser-thumb',
+        `url("${tile.dataset.laserArt}")`
+      );
+    }
+  });
+
+  // Zbuduj overlay raz.
+  const overlay = document.createElement('div');
+  overlay.className = 'laser-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Wyróżniony kafelek');
+  overlay.innerHTML =
+    '<div class="laser-panel" role="document">' +
+      '<button class="laser-close" type="button" aria-label="Zamknij">✕</button>' +
+      '<div class="laser-panel__body"></div>' +
+      '<div class="laser-nav">' +
+        '<button class="laser-prev" type="button" aria-label="Poprzedni">‹ Poprzedni</button>' +
+        '<span class="laser-nav__count" aria-live="polite"></span>' +
+        '<button class="laser-next" type="button" aria-label="Następny">Następny ›</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  const panel    = overlay.querySelector('.laser-panel');
+  const body     = overlay.querySelector('.laser-panel__body');
+  const closeBtn = overlay.querySelector('.laser-close');
+  const prevBtn  = overlay.querySelector('.laser-prev');
+  const nextBtn  = overlay.querySelector('.laser-next');
+  const counter  = overlay.querySelector('.laser-nav__count');
+
+  let current = -1;
+  let lastFocused = null;
+
+  const fillPanel = (index) => {
+    const tile = tiles[index];
+    if (!tile) return;
+    const panelTitle = tile.querySelector('h3, .status-label');
+    // Klonujemy treść kafelka (bez klas afordancji), aby panel był solowy.
+    const clone = tile.cloneNode(true);
+    clone.classList.remove('laser-tile', 'is-launching');
+    clone.removeAttribute('tabindex');
+    clone.removeAttribute('role');
+    clone.removeAttribute('aria-label');
+    clone.style.cssText = ''; // czysty layout w panelu
+    body.innerHTML = '';
+
+    if (tile.dataset.laserArt) {
+      const visual = document.createElement('figure');
+      visual.className = 'laser-art';
+
+      const image = document.createElement('img');
+      image.src = tile.dataset.laserArt;
+      image.alt = panelTitle
+        ? `Abstrakcyjna ilustracja dla tematu: ${panelTitle.textContent.trim()}`
+        : 'Abstrakcyjna ilustracja związana ze sztuczną inteligencją';
+      image.width = 1536;
+      image.height = 1024;
+      image.decoding = 'async';
+
+      const caption = document.createElement('figcaption');
+      caption.textContent = tile.dataset.laserTag || 'Lucid Academy / AI';
+
+      visual.append(image, caption);
+      body.appendChild(visual);
+    }
+
+    const copy = document.createElement('div');
+    copy.className = 'laser-panel__copy';
+    copy.appendChild(clone);
+    body.appendChild(copy);
+
+    counter.textContent = `${index + 1} / ${tiles.length}`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === tiles.length - 1;
+  };
+
+  const open = (index) => {
+    lastFocused = document.activeElement;
+    current = index;
+    // Ślad lasera na źródłowym kafelku.
+    tiles.forEach((t) => t.classList.remove('is-launching'));
+    tiles[index].classList.add('is-launching');
+
+    fillPanel(index);
+    overlay.classList.add('is-active');
+    // wymuś reflow przed klasą is-shown, by transition wystartował
+    void overlay.offsetWidth;
+    overlay.classList.add('is-shown');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  };
+
+  const close = () => {
+    overlay.classList.remove('is-shown');
+    document.body.style.overflow = '';
+    tiles.forEach((t) => t.classList.remove('is-launching'));
+    const done = () => {
+      overlay.classList.remove('is-active');
+      overlay.removeEventListener('transitionend', done);
+    };
+    overlay.addEventListener('transitionend', done);
+    // fallback gdyby transitionend nie odpalił
+    setTimeout(done, 500);
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    current = -1;
+  };
+
+  const go = (delta) => {
+    const next = current + delta;
+    if (next < 0 || next >= tiles.length) return;
+    // re-trigger animacji wjazdu panelu
+    panel.style.animation = 'none';
+    void panel.offsetWidth;
+    panel.style.animation = '';
+    current = next;
+    tiles.forEach((t) => t.classList.remove('is-launching'));
+    tiles[current].classList.add('is-launching');
+    fillPanel(current);
+  };
+
+  // Otwieranie z kafelków
+  tiles.forEach((tile, i) => {
+    tile.addEventListener('click', () => open(i));
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open(i);
+      }
+    });
+  });
+
+  closeBtn.addEventListener('click', close);
+  prevBtn.addEventListener('click', () => go(-1));
+  nextBtn.addEventListener('click', () => go(1));
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('is-shown')) return;
+    if (e.key === 'Escape')      close();
+    else if (e.key === 'ArrowLeft')  go(-1);
+    else if (e.key === 'ArrowRight') go(1);
   });
 }());

@@ -151,14 +151,22 @@ img {
 
 /* Logo */
 .nav-logo {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  height: 68px;
+  margin-top: 25px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.nav-logo img {
+  height: 68px;
+  width: auto;
+  display: block;
 }
 
 .nav-logo:hover {
-  color: var(--lilac);
+  opacity: 0.85;
+  transform: scale(1.02);
 }
 
 .nav-logo-accent {
@@ -436,11 +444,15 @@ img {
 }
 
 .hero-label-dash {
+  display: none;
+}
+
+.hero-logo {
+  width: 36px;
+  height: 36px;
   display: block;
-  width: 2.5rem;
-  height: 1px;
-  background: var(--lilac);
-  opacity: 0.75;
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .hero-label-text {
@@ -1198,26 +1210,22 @@ img {
 
 .founder-profile {
   display: grid;
-  grid-template-columns: 8rem 1fr;
+  grid-template-columns: 1fr 1.5fr;
   gap: clamp(1.25rem, 3vw, 2rem);
   padding: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: start;
+  align-items: stretch;
 }
 
 .founder-mark {
-  width: 8rem;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
+  width: 100%;
+  height: 100%;
   border-radius: var(--radius-lg);
-  color: var(--text-primary);
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
   background:
     radial-gradient(circle at 28% 22%, rgba(75, 255, 255, 0.24), transparent 36%),
     linear-gradient(135deg, rgba(124, 77, 219, 0.9), rgba(216, 92, 200, 0.72));
   box-shadow: var(--glow-violet);
+  object-fit: cover;
+  object-position: center top;
 }
 
 .team-placeholder {
@@ -1249,6 +1257,12 @@ img {
   margin-top: 0.65rem;
   color: var(--text-primary);
   font-weight: 700;
+}
+
+.contact-logo {
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.9;
 }
 
 .formal-list {
@@ -1714,7 +1728,9 @@ img {
   }
 
   .founder-mark {
-    width: 6.5rem;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
     border-radius: var(--radius-sm);
   }
 
@@ -1799,5 +1815,560 @@ img {
   .content-section {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* =============================================
+   LASER SPOTLIGHT — kafelek staje się głównym
+   Po kliknięciu dowolnego kafelka: scena przyciemnia się,
+   wybrany element "wystrzeliwuje" na środek jako solowy panel
+   z laserową poświatą, scanline i wiązką światła.
+   FLIP-style (animacja z pozycji oryginału do centrum).
+============================================== */
+
+/* Overlay – ciemnia sceny + wiązka lasera */
+.laser-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.25rem, 5vw, 4rem);
+  background:
+    radial-gradient(120% 90% at 50% 50%, rgba(124, 77, 219, 0.10), transparent 60%),
+    rgba(4, 2, 10, 0.86);
+  backdrop-filter: blur(10px) saturate(115%);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  opacity: 0;
+  transition: opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.laser-overlay.is-active { display: flex; }
+.laser-overlay.is-shown  { opacity: 1; }
+
+/* Pozioma wiązka lasera przecinająca ekran za panelem */
+.laser-overlay::before {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: 50% 50%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cyan) 18%,
+    var(--hot-pink) 50%,
+    var(--cyan) 82%,
+    transparent
+  );
+  box-shadow: 0 0 24px 4px rgba(75, 255, 255, 0.55),
+              0 0 60px 10px rgba(255, 75, 242, 0.35);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease;
+  pointer-events: none;
+}
+.laser-overlay.is-shown::before {
+  transform: translateY(-50%) scaleX(1);
+  opacity: 0.9;
+}
+
+/* Punkt zbiegu wiązki – delikatny rozbłysk na środku */
+.laser-overlay::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--cyan) 40%, transparent 70%);
+  box-shadow: 0 0 40px 12px rgba(75, 255, 255, 0.6);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s,
+              opacity 0.4s ease;
+  pointer-events: none;
+}
+.laser-overlay.is-shown::after {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* Solowy panel – tu trafia sklonowana treść kafelka */
+.laser-panel {
+  position: relative;
+  width: min(680px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(155deg, rgba(30, 17, 66, 0.96), rgba(11, 7, 22, 0.97));
+  border: 1px solid var(--border-medium);
+  box-shadow:
+    0 0 0 1px rgba(75, 255, 255, 0.12),
+    0 30px 90px -20px rgba(8, 4, 24, 0.9),
+    0 0 70px -8px rgba(124, 77, 219, 0.55);
+  color: var(--text-secondary);
+  transform: translateY(18px) scale(0.96);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s,
+    opacity 0.45s ease 0.08s;
+  scrollbar-width: thin;
+  scrollbar-color: var(--violet) transparent;
+}
+.laser-overlay.is-shown .laser-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Ramka skanująca – energetyczny obrys wjeżdżającego panelu */
+.laser-panel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(75, 255, 255, 0.7),
+    rgba(124, 77, 219, 0.1) 35%,
+    rgba(255, 75, 242, 0.7));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Scanline przebiegający po panelu raz, przy otwarciu */
+.laser-panel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 36%;
+  background: linear-gradient(
+    180deg,
+    rgba(75, 255, 255, 0.16),
+    transparent
+  );
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+.laser-overlay.is-shown .laser-panel::after {
+  animation: laser-scan 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.25s 1;
+}
+@keyframes laser-scan {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translateY(320%); opacity: 0; }
+}
+
+/* Typografia wewnątrz solowego panelu */
+.laser-panel .micro-label,
+.laser-panel .status-label,
+.laser-panel .offer-index {
+  color: var(--cyan);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  opacity: 0.9;
+}
+.laser-panel .offer-index {
+  font-size: 1.1rem;
+  color: var(--hot-pink);
+}
+.laser-panel h3 {
+  color: var(--text-primary);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  line-height: 1.2;
+  margin: 0 0 1rem;
+  text-shadow: 0 0 24px rgba(124, 77, 219, 0.4);
+}
+.laser-panel p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 0.9rem;
+}
+.laser-panel p:last-child { margin-bottom: 0; }
+.laser-panel .quiet-line {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  border-left: 2px solid var(--violet);
+  padding-left: 0.85rem;
+  margin-top: 1.1rem;
+}
+
+/* Przycisk zamknięcia */
+.laser-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-medium);
+  background: rgba(11, 7, 22, 0.7);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  z-index: 2;
+  transition: transform 0.2s ease, border-color 0.2s ease,
+              box-shadow 0.2s ease, color 0.2s ease;
+}
+.laser-close:hover {
+  transform: rotate(90deg) scale(1.08);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 18px rgba(75, 255, 255, 0.45);
+}
+.laser-close:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* Wskazówka nawigacji w panelu (prev/next) */
+.laser-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-soft);
+}
+.laser-nav button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-medium);
+  background: rgba(124, 77, 219, 0.12);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.laser-nav button:hover:not(:disabled) {
+  background: rgba(75, 255, 255, 0.16);
+  border-color: var(--cyan);
+  color: var(--text-primary);
+  box-shadow: 0 0 16px rgba(75, 255, 255, 0.3);
+}
+.laser-nav button:disabled { opacity: 0.32; cursor: default; }
+.laser-nav__count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+/* Kafelki klikalne – sygnał afordancji */
+.laser-tile {
+  cursor: pointer;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s ease, border-color 0.28s ease;
+}
+.laser-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px -18px rgba(124, 77, 219, 0.6),
+              0 0 0 1px rgba(75, 255, 255, 0.22);
+}
+.laser-tile:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+.laser-tile::after {
+  content: "↗";
+  position: absolute;
+  top: 0.85rem;
+  right: 1rem;
+  font-size: 0.95rem;
+  color: var(--cyan);
+  opacity: 0;
+  transform: translate(-4px, 4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.laser-tile:hover::after,
+.laser-tile:focus-visible::after {
+  opacity: 0.85;
+  transform: translate(0, 0);
+}
+/* większość kafelków to <article> bez position – nadajemy kontekst */
+.laser-tile { position: relative; }
+
+/* Element-źródło chwilowo "wystrzelony" – ślad po wybranym kafelku */
+.laser-tile.is-launching {
+  box-shadow: 0 0 0 1px var(--cyan),
+              0 0 40px -4px rgba(75, 255, 255, 0.5);
+}
+
+/* Reduced motion – bez wiązek i scanline, czysty fade */
+@media (prefers-reduced-motion: reduce) {
+  .laser-overlay,
+  .laser-panel { transition: opacity 0.2s ease; }
+  .laser-overlay::before,
+  .laser-overlay::after,
+  .laser-panel::after { display: none; }
+  .laser-panel { transform: none; }
+}
+
+/* =============================================
+   10. AI ART DIRECTION
+   Wspólny system ilustracji dla sekcji i paneli laserowych.
+============================================== */
+
+body {
+  background:
+    radial-gradient(circle at 12% 22%, rgba(124, 77, 219, 0.08), transparent 24rem),
+    radial-gradient(circle at 88% 66%, rgba(75, 255, 255, 0.045), transparent 28rem),
+    var(--bg-0);
+}
+
+/* Szerokie obrazy narracyjne pomiędzy wprowadzeniem a treścią sekcji. */
+.section-art {
+  position: relative;
+  width: 100%;
+  height: clamp(260px, 36vw, 410px);
+  margin: 0 0 clamp(2rem, 5vw, 4rem);
+  overflow: hidden;
+  border: 1px solid rgba(176, 136, 244, 0.26);
+  border-radius: clamp(1.1rem, 2.5vw, 2rem);
+  background: var(--bg-2);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.42),
+    0 0 60px rgba(124, 77, 219, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  isolation: isolate;
+}
+
+.section-art::before,
+.section-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.section-art::before {
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(7, 4, 15, 0.82) 100%),
+    radial-gradient(circle at 80% 15%, rgba(75, 255, 255, 0.12), transparent 34%);
+}
+
+.section-art::after {
+  inset: 1px;
+  border-radius: inherit;
+  box-shadow: inset 0 0 70px rgba(7, 4, 15, 0.58);
+}
+
+.section-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.92;
+  filter: saturate(0.96) contrast(1.04);
+  transform: scale(1.015);
+  transition:
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.8s ease;
+}
+
+.section-art:hover img {
+  transform: scale(1.045);
+  filter: saturate(1.08) contrast(1.07);
+}
+
+.section-art figcaption {
+  position: absolute;
+  left: clamp(1.15rem, 3vw, 2.2rem);
+  right: clamp(1.15rem, 3vw, 2.2rem);
+  bottom: clamp(1rem, 2.5vw, 1.7rem);
+  z-index: 2;
+  max-width: 62ch;
+  color: var(--text-primary);
+  font-size: clamp(0.85rem, 1.15vw, 1rem);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.9);
+}
+
+.section-art--mission {
+  width: min(100%, 1120px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-art--mission img,
+.section-art--team img {
+  object-position: center 48%;
+}
+
+.section-art--university img {
+  object-position: center 44%;
+}
+
+.section-art--activity img,
+.section-art--contact img {
+  object-position: center 58%;
+}
+
+/* Delikatny podgląd osobnego świata wizualnego na każdym kafelku. */
+.laser-tile.has-laser-art {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.laser-tile.has-laser-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(90deg, rgba(11, 7, 22, 0.98) 12%, rgba(11, 7, 22, 0.6) 58%, rgba(11, 7, 22, 0.12)),
+    var(--laser-thumb);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.23;
+  filter: saturate(1.12) contrast(1.05);
+  transition:
+    opacity 0.35s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.laser-tile.has-laser-art:hover::before,
+.laser-tile.has-laser-art:focus-visible::before {
+  opacity: 0.38;
+  transform: scale(1.04);
+}
+
+.laser-tile.has-laser-art > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Panel laserowy: grafika prowadzi, treść staje się jej opisem. */
+.laser-panel {
+  width: min(920px, 100%);
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+}
+
+.laser-panel__body {
+  display: grid;
+  gap: clamp(1.2rem, 2.5vw, 1.8rem);
+}
+
+.laser-art {
+  position: relative;
+  height: clamp(220px, 42vh, 390px);
+  overflow: hidden;
+  border-radius: calc(var(--radius-lg) - 0.35rem);
+  border: 1px solid rgba(75, 255, 255, 0.22);
+  background: var(--bg-0);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.36),
+    0 0 32px rgba(124, 77, 219, 0.16);
+}
+
+.laser-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 44%, rgba(7, 4, 15, 0.82)),
+    radial-gradient(circle at 82% 12%, rgba(75, 255, 255, 0.15), transparent 30%);
+  pointer-events: none;
+}
+
+.laser-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.06) contrast(1.04);
+}
+
+.laser-art figcaption {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.9rem;
+  z-index: 1;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(75, 255, 255, 0.28);
+  border-radius: var(--radius-pill);
+  background: rgba(7, 4, 15, 0.66);
+  backdrop-filter: blur(12px);
+  color: var(--cyan);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.laser-panel__copy {
+  padding: 0 clamp(0.4rem, 2vw, 1rem);
+}
+
+.laser-panel__copy .offer-item {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+}
+
+.laser-panel__copy .roadmap-group,
+.laser-panel__copy .text-block,
+.laser-panel__copy .text-panel,
+.laser-panel__copy .offer-item {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.laser-panel__copy .program-list > article {
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .section-art {
+    height: clamp(220px, 66vw, 320px);
+    border-radius: 1rem;
+  }
+
+  .section-art--mission {
+    width: auto;
+    margin-left: 3.5rem;
+    margin-right: 1.25rem;
+  }
+
+  .laser-panel {
+    max-height: 92vh;
+  }
+
+  .laser-art {
+    height: clamp(190px, 54vw, 270px);
+  }
+
+  .laser-panel__copy .offer-item {
+    grid-template-columns: 1fr;
   }
 }
