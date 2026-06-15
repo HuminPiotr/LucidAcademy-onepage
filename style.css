@@ -1726,6 +1726,10 @@ img {
    Tekst na górze, miasto niżej, animacje uproszczone
 ========================================= */
 @media (max-width: 767px) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .nav-hamburger {
     display: flex;
   }
@@ -1932,9 +1936,9 @@ img {
   }
 
   .timeline section {
-    min-height: auto;
+    min-height: 0;
     display: block;
-    padding: 1.5rem 0;
+    padding: 1rem 0;
     justify-content: auto;
     align-items: auto;
   }
