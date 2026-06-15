@@ -561,16 +561,65 @@
               </article>
             </div>
 
-            <aside class="partners-band" aria-labelledby="partners-heading">
-              <h3 id="partners-heading">Z kim pracowaliśmy</h3>
-              <p>
-                Laboratoria Miejskie w Toruniu, Bydgoszczy i Szczecinie ·
-                Uniwersytet Mikołaja Kopernika · Urząd Miasta Torunia · Urząd
-                Miasta Bydgoszczy · Centrum Sztuki Współczesnej w Toruniu · TCUS
-                · Toruński Uniwersytet Trzeciego Wieku · Fundacja im. Stefana
-                Batorego · Fundacja Stocznia · FISE · Pracownia Zrównoważonego
-                Rozwoju
-              </p>
+            <aside class="partners-section" aria-labelledby="partners-heading">
+              <!-- Network visualization (SVG overlay) -->
+              <svg
+                class="partners-network"
+                aria-hidden="true"
+                width="100%"
+                height="100%"
+              ></svg>
+
+              <div class="partners-header">
+                <h2 id="partners-heading">Z kim pracowaliśmy</h2>
+                <p class="partners-intro">
+                  Sieć instytucji kultury, samorządów, uczelni i organizacji
+                  społecznych, które wspólnie oswajają sztuczną inteligencję.
+                </p>
+              </div>
+
+              <div class="partners-grid" data-partners-grid>
+                <!-- Edukacja & Nauka -->
+                <div class="partner-category">
+                  <p class="partner-category-label">Edukacja & Nauka</p>
+                  <ul class="partner-list" role="list">
+                    <li>Uniwersytet Mikołaja Kopernika</li>
+                    <li>Toruński Uniwersytet Trzeciego Wieku</li>
+                  </ul>
+                </div>
+
+                <!-- Samorząd & Administracja -->
+                <div class="partner-category">
+                  <p class="partner-category-label">Samorząd & Administracja</p>
+                  <ul class="partner-list" role="list">
+                    <li>Urząd Miasta Torunia</li>
+                    <li>Urząd Miasta Bydgoszczy</li>
+                    <li>
+                      Laboratoria Miejskie w Toruniu, Bydgoszczy i Szczecinie
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Kultura & Sztuka -->
+                <div class="partner-category">
+                  <p class="partner-category-label">Kultura & Sztuka</p>
+                  <ul class="partner-list" role="list">
+                    <li>Centrum Sztuki Współczesnej w Toruniu</li>
+                    <li>TCUS</li>
+                  </ul>
+                </div>
+
+                <!-- Fundacje & Organizacje -->
+                <div class="partner-category">
+                  <p class="partner-category-label">Fundacje & Organizacje</p>
+                  <ul class="partner-list" role="list">
+                    <li>Fundacja im. Stefana Batorego</li>
+                    <li>Fundacja Stocznia</li>
+                    <li>FISE</li>
+                    <li>Pracownia Zrównoważonego Rozwoju</li>
+                  </ul>
+                </div>
+              </div>
             </aside>
 
             <p class="section-cta">
@@ -768,21 +817,6 @@
               </p>
             </header>
 
-            <figure class="section-art section-art--team">
-              <img
-                src="assets/art/laser-sensei.webp"
-                alt="Abstrakcyjny łańcuch pryzmatów przekazujących i wzmacniających wiedzę"
-                width="1536"
-                height="1024"
-                loading="lazy"
-                decoding="async"
-              />
-              <figcaption>
-                Wiedza rośnie, gdy jest przekazywana dalej i zamienia się w sieć
-                współpracy.
-              </figcaption>
-            </figure>
-
             <div class="founder-profile">
               <img
                 class="founder-mark"
@@ -816,6 +850,25 @@
                 </a>
               </article>
             </div>
+
+            <figure class="section-art section-art--team">
+              <img
+                src="assets/zdjecia/grupowe.jpg"
+                alt="Sympatycy Lucid Academy — społeczność ludzi wspierających misję fundacji"
+                width="1200"
+                height="800"
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption>
+                Sympatycy Lucid Academy
+              </figcaption>
+            </figure>
+
+
+            <!-- =============================================
+               SEKCJA: Sympatycy Lucid Academy (overlapped gallery)
+          ============================================== -->
           </div>
         </section>
 
@@ -888,7 +941,7 @@
                     <dd>543572049</dd>
                   </div>
                 </dl>
-                <p>Siedziba: ul. Hieronima Derdowskiego 3/9, kod, Toruń</p>
+                <p>Siedziba: ul. Hieronima Derdowskiego 3/9, 87-100, Toruń</p>
               </div>
             </div>
 
