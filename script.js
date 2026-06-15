@@ -147,7 +147,9 @@
       if (card) card.classList.add('is-revealed');
       revealObs.unobserve(e.target);
     });
-  }, { rootMargin: '0px 0px -35% 0px', threshold: 0.15 });
+  // Długie sekcje mobilne mogą być wyższe niż kilka viewportów, więc wysoki
+  // próg procentowy nigdy nie zostanie osiągnięty i treść zostałaby niewidoczna.
+  }, { rootMargin: '0px 0px -35% 0px', threshold: 0.01 });
 
   sections.forEach((s) => revealObs.observe(s));
 }());
