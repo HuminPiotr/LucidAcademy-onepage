@@ -1878,12 +1878,9 @@ img {
 
   .content-section,
   .content-section--wide {
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    box-sizing: border-box;
+    width: auto;
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
   }
 
   .section-intro {
