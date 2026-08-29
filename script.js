@@ -406,4 +406,38 @@
     else if (e.key === 'ArrowLeft')  go(-1);
     else if (e.key === 'ArrowRight') go(1);
   });
+
+  // =============================================
+  // LICZNIK ODSŁON (GoatCounter)
+  // =============================================
+  // Jedyny obcy skrypt na tej stronie i jedyny, bez którego wszystko
+  // działa tak samo. Dopóki `kod` jest pusty, nie leci ani jedno
+  // zapytanie na zewnątrz.
+  //
+  // Trzy zabezpieczenia: tylko https, tylko na produkcyjnej domenie
+  // (więc testy z dysku i z localhosta nie zaśmiecają statystyk),
+  // ładowanie asynchroniczne z obsługą błędu. GoatCounter nie stawia
+  // ciasteczek i nie przechowuje adresów IP, więc nie ma tu czego
+  // pokrywać zgodą.
+  //
+  // Ten sam mechanizm siedzi w projekty/swietoBP/index.html. Powielony
+  // świadomie: tamta strona jest samowystarczalna i ma działać otwarta
+  // z dysku, więc wspólny plik zerwałby jej główną własność.
+  // Rozbicie na podstrony robi sam GoatCounter — kluczuje odsłony po
+  // ścieżce URL, więc jeden panel pokazuje osobno „/" i „/projekty/swietobp/".
+  (function licznik() {
+    const KOD    = 'https://lucidacademy.goatcounter.com/count';
+    const DOMENY = ['lucidacademy.pl', 'www.lucidacademy.pl'];
+
+    if (!KOD) return;
+    if (location.protocol !== 'https:') return;
+    if (!DOMENY.includes(location.hostname)) return;
+
+    const s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-goatcounter', KOD);
+    s.src = 'https://gc.zgo.at/count.js';
+    s.onerror = () => { /* brak licznika nikomu nie szkodzi */ };
+    document.body.appendChild(s);
+  }());
 }());
