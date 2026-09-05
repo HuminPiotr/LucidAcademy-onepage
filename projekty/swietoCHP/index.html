@@ -1,0 +1,2719 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Święto dzielnicy</title>
+<meta name="description" content="Mapa-przewodnik po święcie dzielnicowym: program, plan zwiedzania i czasy przejścia między wydarzeniami.">
+<meta name="theme-color" content="#E7D8BC">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   Kierunek: secesyjna mapa dzielnicy. Ciepły papier, brązowy tusz,
+   przygaszona zieleń parku, spokojny błękit Wisły. Krój szeryfowy
+   na nagłówki i podpisy na mapie, bezszeryfowy na treść.
+
+   Cała stylizacja siedzi tutaj. Dane niosą geometrię i treść,
+   kod nie zna nazwy święta.
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Barwy wyciągnięte wprost ze zdjęć Bydgoskiego Przedmieścia — cała ich
+     siódemka mieści się w jednej rodzinie sepii i ochry. Tożsamość warstw
+     niosą tekstury (stippling koron, kreskowanie wody), nie nasycenie,
+     dzięki czemu tusz ulic może być ciemniejszy niż wcześniej. */
+  --papier:        #EBD9B7;
+  --papier-cien:   #DFC9A2;
+  --papier-jasny:  #F6EAD0;
+  --tusz:          #4B402F;
+  --tusz-jasny:    #6E6349;
+  --tusz-mgla:     #8E8163;
+  --kreska:        rgba(75, 64, 47, .22);
+  --kreska-mocna:  rgba(75, 64, 47, .45);
+
+  --ulica-glowna:  #57482F;
+  --ulica-lokalna: #7E6B4C;
+  --ulica-pieszo:  #A08A66;
+  --park:          #B9B189;
+  --park-obrys:    #8E8760;
+  --woda:          #A9BEC4;   /* przygaszony, ale wciąż błękit — rzeka to główny punkt orientacyjny */
+  --woda-obrys:    #5E7784;
+  --budynek:       #D9C39B;
+  --budynek-obrys: #7A6749;
+
+  /* Paski nad i pod mapą — ciemne, żeby odciąć interfejs od papieru mapy
+     i odbić skórzaną okładkę księgi z intra. Panel z treścią zostaje
+     jasny, bo to się czyta. */
+  --pasek-tlo:        #3E3427;
+  --pasek-tekst:      #F0E4CA;
+  --pasek-tekst-mgla: #BCA986;
+  --pasek-kreska:     rgba(240, 228, 202, .18);
+
+  --akcent:        #9C3B2E;
+  --akcent-jasny:  #E0705C;   /* akcent czytelny na ciemnym pasku */
+  --ostrzezenie:   #B4471F;
+  --wiele:         #5E4B33;   /* pin z wydarzeniami z różnych kategorii */
+
+  --szeryf: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Times New Roman', serif;
+  --bezszeryf: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+  --pasek-wys: 58px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: var(--papier);
+  color: var(--tusz);
+  font-family: var(--bezszeryf);
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+body { display: flex; flex-direction: column; overscroll-behavior: none; }
+
+button { font: inherit; color: inherit; }
+a { color: var(--akcent); }
+
+/* ─────────── nagłówek ─────────── */
+header {
+  flex: none;
+  padding: .5rem .5rem .45rem .9rem;
+  background: var(--papier-cien);
+  border-bottom: 1px solid var(--kreska);
+  display: flex; align-items: center; gap: .5rem;
+}
+header .tytuly { flex: 1; min-width: 0; }
+#do-intra {
+  flex: none; width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: none; border: 1px solid var(--kreska-mocna); border-radius: 7px;
+  cursor: pointer;
+}
+#do-intra[hidden] { display: none; }   /* selektor elementu bije samo [hidden] */
+
+/* Logo w nagłówku — klikalne, prowadzi do „O nas". Tło grafiki jest
+   dobrane pod papier, więc obywa się bez ramki i nie wygląda jak naklejka. */
+#do-logo {
+  flex: none; width: 44px; height: 44px; padding: 0;
+  background: none; border: 0; border-radius: 6px; cursor: pointer;
+  display: grid; place-items: center; overflow: hidden;
+}
+#do-logo[hidden] { display: none; }
+#do-logo img { width: 40px; height: 40px; object-fit: cover; border-radius: 5px; display: block; }
+#do-logo:hover { background: rgba(75,64,47,.08); }
+#do-logo:focus-visible { outline: 3px solid var(--tusz); outline-offset: 2px; }
+
+/* Logo w panelu „O nas" — duże, nad tekstem. */
+#onas-logo {
+  display: block; width: 100%; max-width: 260px; height: auto;
+  margin: 0 auto .9rem; border-radius: 8px;
+  border: 1px solid var(--kreska);
+}
+#do-intra svg { width: 21px; height: 21px; fill: var(--tusz-jasny); }
+#do-intra:hover { background: rgba(75,64,47,.08); }
+header h1 {
+  margin: 0;
+  font-family: var(--szeryf);
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  font-weight: 600; line-height: 1.15;
+}
+header p { margin: 0; font-size: .74rem; color: var(--tusz-jasny); }
+
+/* ─────────── przełącznik dni ─────────── */
+#dni {
+  flex: none; display: flex; gap: 1px;
+  background: var(--papier-cien);
+  border-bottom: 1px solid var(--kreska);
+  padding: 0 .55rem .45rem;
+}
+#dni button {
+  flex: 1; min-height: 36px; padding: .3rem .4rem;
+  background: transparent; border: 1px solid var(--kreska-mocna);
+  font-size: .82rem; cursor: pointer;
+}
+#dni button:first-child { border-radius: 5px 0 0 5px; }
+#dni button:last-child  { border-radius: 0 5px 5px 0; }
+#dni button + button { border-left: none; }
+#dni button[aria-pressed="true"] { background: var(--tusz); color: var(--papier-jasny); border-color: var(--tusz); }
+
+/* ─────────── pasek promowanego wydarzenia ─────────── */
+#promo {
+  flex: none; display: flex; align-items: center; gap: .6rem;
+  padding: .4rem .5rem;
+  background: var(--papier-cien);
+  border-bottom: 1px solid var(--kreska);
+}
+#promo[hidden] { display: none; }
+#promo .znak {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: var(--kolor, var(--akcent)); color: #FBF4E4;
+  border: 1.5px solid rgba(251,244,228,.85);
+  box-shadow: 0 1px 4px rgba(75,64,47,.4);
+}
+#promo .znak svg { width: 18px; height: 18px; fill: currentColor; }
+#promo .znak img { width: 100%; height: 100%; object-fit: cover; }
+#promo .tresc { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; }
+/* Trzy ciasne wiersze bez zawijania — pasek nie może zjadać mapy. */
+#promo .tresc > p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#promo .haslo {
+  margin: 0; font-size: .61rem; letter-spacing: .05em; text-transform: uppercase;
+  line-height: 1.25; color: var(--tusz-mgla);
+}
+#promo .co { margin: 0; font-family: var(--szeryf); font-size: .88rem; line-height: 1.25; }
+#promo .zegar { margin: 0; font-size: .72rem; line-height: 1.3; color: var(--tusz-jasny); font-variant-numeric: tabular-nums; }
+#promo .zegar.trwa { color: var(--akcent); font-weight: 600; }
+#promo .sluchaj {
+  flex: none; min-height: 40px; padding: .4rem .65rem;
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: var(--tusz); color: var(--papier-jasny);
+  border-radius: 6px; font-size: .82rem; text-decoration: none;
+}
+#promo .sluchaj svg { width: 15px; height: 15px; fill: currentColor; }
+#promo .zwin {
+  flex: none; width: 34px; height: 40px; background: none; border: 0;
+  cursor: pointer; color: var(--tusz-mgla); font-size: 1.1rem; line-height: 1;
+}
+
+/* ─────────── mapa ─────────── */
+#mapa {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  touch-action: none;
+  background-color: var(--papier);
+  /* Faktura papieru z filtru SVG w data-URI — bez plików zewnętrznych. */
+  background-image:
+    radial-gradient(ellipse 80% 60% at 22% 18%, rgba(255,252,242,.55), transparent 70%),
+    radial-gradient(ellipse 70% 70% at 82% 78%, rgba(176,150,106,.20), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='z'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23z)' opacity='0.28'/%3E%3C/svg%3E");
+  background-blend-mode: normal, multiply, multiply;
+}
+#plansza { display: block; width: 100%; height: 100%; }
+#plansza path { vector-effect: non-scaling-stroke; }
+
+/* Barwy wzorów przez CSS, nie przez atrybuty — pewniej działa ze zmiennymi. */
+#korony > rect { fill: var(--park); }
+#korony > g    { fill: var(--park-obrys); }
+#fale   > rect { fill: var(--woda); }
+#fale   > path { stroke: var(--woda-obrys); }
+#mur    > rect { fill: var(--budynek); }
+#mur    > path { stroke: var(--budynek-obrys); }
+
+/* Przygaszenie brzegów — mocne tam, gdzie nie ma treści, znikome w środku. */
+#winieta {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 78% 68% at 50% 47%,
+    rgba(58,46,28,0) 62%, rgba(58,46,28,.10) 82%, rgba(58,46,28,.22) 100%);
+}
+
+.zielen  { fill: url(#korony);   stroke: var(--park-obrys);    stroke-width: 1; }
+.woda    { fill: url(#fale);     stroke: var(--woda-obrys);    stroke-width: 1.2; }
+.rzeka   { fill: none;           stroke: var(--woda);          stroke-width: 3; stroke-linecap: round; }
+.budynek { fill: url(#mur);      stroke: var(--budynek-obrys); stroke-width: 1; }
+.pieszo  { fill: none; stroke: var(--ulica-pieszo);  stroke-width: 1;   stroke-dasharray: 3 2.5; stroke-linecap: round; }
+.lokalne { fill: none; stroke: var(--ulica-lokalna); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.glowne  { fill: none; stroke: var(--ulica-glowna);  stroke-width: 4.4; stroke-linecap: round; stroke-linejoin: round; }
+
+#nazwy { opacity: 0; transition: opacity .18s ease; pointer-events: none; }
+#nazwy.widoczne { opacity: 1; }
+#nazwy text {
+  font-family: var(--szeryf); font-size: 11px; fill: var(--tusz);
+  text-anchor: middle; paint-order: stroke;
+  stroke: var(--papier); stroke-width: 3.5; stroke-linejoin: round;
+}
+
+/* trasa planu — łagodny łuk, nie prosta */
+#trasa path {
+  fill: none; stroke: var(--akcent); stroke-width: 2.5;
+  stroke-dasharray: 7 5; stroke-linecap: round;
+  vector-effect: non-scaling-stroke; opacity: .85;
+}
+
+/* ─────────── furnitura mapy ─────────── */
+#furnitura { position: absolute; inset: 0; pointer-events: none; }
+#furnitura text { font-family: var(--szeryf); fill: var(--tusz); }
+.roza-linia { stroke: var(--tusz); stroke-width: 1; fill: none; }
+.roza-ramie { fill: var(--tusz); }
+.roza-ramie-jasne { fill: var(--papier); stroke: var(--tusz); stroke-width: .8; }
+.skala-kreska { stroke: var(--tusz); stroke-width: 1.6; fill: none; stroke-linecap: square; }
+
+/* ─────────── piny ─────────── */
+#piny { position: absolute; inset: 0; pointer-events: none; }
+.pin {
+  position: absolute; left: 0; top: 0;
+  width: 44px; height: 44px;               /* pole dotyku, nie rozmiar rysunku */
+  margin: -40px 0 0 -22px;                 /* czubek w punkcie */
+  border: 0; padding: 0; background: none;
+  pointer-events: auto; cursor: pointer;
+  display: grid; place-items: center;
+  transition: opacity .16s ease;
+}
+.pin .medalion {
+  position: relative;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  background: var(--kolor, var(--akcent));
+  color: #FBF4E4;
+  border: 1.5px solid rgba(251, 244, 228, .9);
+  border-radius: 50%;
+  box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 3px 7px rgba(74,59,38,.4);
+}
+/* szpic pinu — mały trójkąt pod medalionem */
+.pin .medalion::after {
+  content: ''; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%) translateY(-3px);
+  border: 5px solid transparent;
+  border-top-color: var(--kolor, var(--akcent));
+}
+.pin svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+/* Numer organizatorów zamiast ikony — dwucyfrowy musi się zmieścić bez ściskania. */
+.pin .numer { font: 700 14px/1 var(--bezszeryf); letter-spacing: -.02em; }
+.pin .ile {
+  position: absolute; top: -5px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  background: var(--papier-jasny); color: var(--tusz);
+  border: 1px solid var(--kreska-mocna); border-radius: 9px;
+  font: 600 10px/15px var(--bezszeryf);
+}
+.pin.przygaszony { opacity: .22; }
+.pin.wplanie .medalion { box-shadow: 0 0 0 3px var(--akcent), 0 3px 7px rgba(74,59,38,.4); }
+.pin:focus-visible .medalion { outline: 3px solid var(--tusz); outline-offset: 3px; }
+.pin.przyblizony .medalion { border-style: dashed; }
+
+/* ─────────── dolny pasek ─────────── */
+#pasek {
+  flex: none; display: flex;
+  background: var(--papier-cien);
+  border-top: 1px solid var(--kreska);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#pasek button {
+  flex: 1; min-height: var(--pasek-wys);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: none; border: 0; cursor: pointer;
+  font-size: .63rem; color: var(--tusz-jasny);
+  position: relative; padding: 0 2px;
+}
+#pasek button svg { width: 20px; height: 20px; fill: currentColor; }
+#pasek button[aria-expanded="true"] { color: var(--tusz); background: rgba(74,59,38,.07); }
+#pasek .licznik {
+  position: absolute; top: 6px; left: 50%; margin-left: 6px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: var(--akcent); color: #FBF4E4;
+  border-radius: 8px; font: 600 10px/16px var(--bezszeryf);
+}
+
+/* ─────────── arkusz (panel wysuwany) ─────────── */
+#arkusz {
+  /* Kończy się nad dolnym paskiem, żeby dało się przeskoczyć wprost
+     z programu do planu bez zamykania panelu. */
+  position: fixed; z-index: 20;
+  left: 0; right: 0; bottom: calc(var(--pasek-wys) + env(safe-area-inset-bottom));
+  max-height: 74vh; display: flex; flex-direction: column;
+  background: var(--papier-jasny);
+  border-top: 1px solid var(--kreska-mocna);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 26px rgba(74,59,38,.28);
+  transform: translateY(101%);
+  transition: transform .24s cubic-bezier(.32,.72,.35,1);
+}
+#arkusz.otwarty { transform: none; }
+#arkusz { border-radius: 14px 14px 0 0; }
+#arkusz[hidden] { display: none; }
+
+#arkusz-gora {
+  flex: none; display: flex; align-items: center; gap: .5rem;
+  padding: .55rem .5rem .5rem .9rem;
+  border-bottom: 1px solid var(--kreska);
+}
+#arkusz-gora h2 {
+  flex: 1; margin: 0; min-width: 0;
+  font-family: var(--szeryf); font-size: 1.02rem; font-weight: 600; line-height: 1.2;
+}
+#arkusz-gora button {
+  flex: none; width: 44px; height: 44px;
+  background: none; border: 0; cursor: pointer; border-radius: 8px;
+  display: grid; place-items: center;
+}
+#arkusz-gora button:hover { background: rgba(74,59,38,.08); }
+#arkusz-gora button[hidden] { display: none; }   /* bez tego selektor elementu bije [hidden] */
+#arkusz-gora button svg { width: 20px; height: 20px; fill: var(--tusz); }
+#arkusz-tresc {
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: .8rem .9rem 1.2rem;
+  overscroll-behavior: contain;
+}
+
+/* ─────────── treść: lista wydarzeń ─────────── */
+.dzien-naglowek {
+  position: sticky; top: -.8rem; z-index: 1;
+  margin: 1rem -.9rem .5rem; padding: .35rem .9rem;
+  background: var(--papier-cien);
+  font-family: var(--szeryf); font-size: .82rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--tusz-jasny);
+}
+.dzien-naglowek:first-child { margin-top: 0; }
+
+.wydarzenie {
+  width: 100%; text-align: left;
+  display: grid; grid-template-columns: auto auto 1fr; gap: .1rem .6rem; align-items: start;
+  padding: .65rem .2rem; background: none; border: 0;
+  border-bottom: 1px solid var(--kreska); cursor: pointer;
+}
+.wydarzenie:last-child { border-bottom: 0; }
+.wydarzenie .godz {
+  grid-column: 1; grid-row: 1 / 3;
+  font-variant-numeric: tabular-nums; font-size: .8rem; font-weight: 600;
+  color: var(--tusz-jasny); padding-top: .1rem; white-space: nowrap;
+}
+.wydarzenie .tyt { grid-column: 3; grid-row: 1; font-size: .93rem; line-height: 1.3; }
+.wydarzenie .msc { grid-column: 3; grid-row: 2; font-size: .76rem; color: var(--tusz-mgla); margin-top: .15rem; }
+.kropka {
+  grid-column: 2; grid-row: 1 / 3;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--kolor); margin-top: .28rem;
+}
+
+/* ─────────── treść: szczegóły wydarzenia ─────────── */
+.meta { display: flex; flex-wrap: wrap; gap: .3rem .8rem; font-size: .84rem; color: var(--tusz-jasny); margin-bottom: .5rem; }
+.meta b { font-weight: 600; color: var(--tusz); }
+.opis { font-size: .93rem; line-height: 1.55; white-space: pre-wrap; margin: .7rem 0; }
+.opis:empty { display: none; }
+.brak-opisu {
+  margin: .7rem 0; padding: .6rem .75rem;
+  background: var(--papier-cien); border-left: 3px solid var(--kreska-mocna);
+  font-size: .85rem; color: var(--tusz-jasny);
+}
+
+.znaczki { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0; }
+.znaczek {
+  padding: .2rem .55rem; border-radius: 11px;
+  background: var(--papier-cien); border: 1px solid var(--kreska);
+  font-size: .74rem; color: var(--tusz-jasny);
+}
+.znaczek.kat { background: var(--kolor); color: #FBF4E4; border-color: transparent; }
+/* Plakietka nurtu — obrys zamiast wypełnienia, żeby nie konkurowała
+   z kolorem kategorii, ale była widoczna od pierwszego spojrzenia. */
+.znaczek.nurt-znaczek { border: 1.5px solid var(--akcent); color: var(--akcent); background: none; font-weight: 600; }
+.wydarzenie .nurt {
+  display: inline-block; margin-right: .35rem; padding: .05rem .38rem;
+  border: 1px solid var(--akcent); border-radius: 9px;
+  font-size: .66rem; font-weight: 600; color: var(--akcent);
+  vertical-align: 1px; white-space: nowrap;
+}
+.opis.o-nurcie {
+  padding: .6rem .75rem; background: var(--papier-cien);
+  border-left: 3px solid var(--akcent); font-size: .88rem;
+}
+
+.zdjecia { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .4rem; margin: .8rem 0; }
+.zdjecia button { padding: 0; border: 1px solid var(--kreska); background: none; cursor: pointer; border-radius: 3px; overflow: hidden; }
+.zdjecia img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+
+.linki { display: flex; flex-direction: column; gap: .3rem; margin: .8rem 0; }
+.linki a { font-size: .88rem; }
+
+.dzialania { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0 .3rem; }
+.przycisk {
+  flex: 1 1 auto; min-height: 46px; padding: .5rem .9rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  background: var(--tusz); color: var(--papier-jasny);
+  border: 1px solid var(--tusz); border-radius: 7px;
+  font-size: .88rem; cursor: pointer; text-decoration: none;
+}
+.przycisk.pusty { background: none; color: var(--tusz); }
+.przycisk.pusty[aria-pressed="true"] { background: var(--akcent); border-color: var(--akcent); color: var(--papier-jasny); }
+.przycisk svg { width: 17px; height: 17px; fill: currentColor; }
+
+/* ─────────── treść: planer ─────────── */
+.plan-poz { display: grid; grid-template-columns: auto 1fr; gap: .1rem .7rem; padding: .6rem 0; }
+.plan-poz .godz { font-variant-numeric: tabular-nums; font-weight: 600; font-size: .84rem; white-space: nowrap; }
+.plan-poz .tyt { font-size: .93rem; line-height: 1.3; }
+.plan-poz .msc { grid-column: 2; font-size: .76rem; color: var(--tusz-mgla); margin-top: .15rem; }
+.plan-poz .usun { grid-column: 2; justify-self: start; margin-top: .3rem; background: none; border: 0; padding: .2rem 0; font-size: .76rem; color: var(--akcent); cursor: pointer; text-decoration: underline; }
+
+.przejscie {
+  display: flex; align-items: center; gap: .45rem;
+  margin-left: .4rem; padding: .4rem 0 .4rem .9rem;
+  border-left: 2px dashed var(--kreska-mocna);
+  font-size: .78rem; color: var(--tusz-jasny);
+}
+.przejscie svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+.przejscie.zaciasno { color: var(--ostrzezenie); font-weight: 600; }
+.przejscie.zaciasno svg { fill: var(--ostrzezenie); }
+
+/* ─────────── treść: luki i filtry ─────────── */
+/* ─────────── przyjaciele święta ─────────── */
+.przyjaciel {
+  display: grid; grid-template-columns: auto 1fr auto; gap: .2rem .7rem; align-items: start;
+  padding: .8rem 0; border-bottom: 1px solid var(--kreska);
+}
+.przyjaciel:last-child { border-bottom: 0; }
+.przyjaciel h3 { margin: 0 0 .2rem; font-family: var(--szeryf); font-size: .98rem; font-weight: 600; }
+.przyjaciel .msc { margin: 0; font-size: .8rem; color: var(--tusz-mgla); }
+.przyjaciel .pomoc { margin: .25rem 0 0; font-size: .84rem; line-height: 1.45; color: var(--tusz-jasny); }
+.przyjaciel p { margin: .25rem 0 0; }
+.znaczek-serca {
+  width: 26px; height: 26px; margin-top: .1rem; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--papier-cien); border: 1px solid var(--kreska-mocna);
+}
+.znaczek-serca svg { width: 14px; height: 14px; fill: var(--akcent); }
+.pokaz-na-mapie {
+  align-self: center; min-height: 38px; padding: .35rem .7rem;
+  background: none; border: 1px solid var(--kreska-mocna); border-radius: 6px;
+  font-size: .8rem; cursor: pointer; white-space: nowrap;
+}
+.pokaz-na-mapie:hover { background: var(--papier-cien); }
+
+/* Znacznik na mapie — mniejszy i obrysowany, celowo inny niż pin wydarzenia.
+   Odsunięty w prawo i w górę, bo cztery z pięciu przyjaciół siedzą pod
+   pinami wydarzeń (Trafo Cafe wręcz dokładnie na swoim własnym).
+   Dzięki temu czyta się jak plakietka przy pinie, a nie jak przykrywka. */
+.znacznik-przyjaciela {
+  position: absolute; left: 0; top: 0;
+  /* Środek serduszka na tej samej wysokości co medalion pinu (18 px nad
+     punktem, bo pin ma szpic) — dzięki temu rozpychanie liczy to, co widać. */
+  width: 24px; height: 24px; margin: -30px 0 0 -12px;
+  padding: 0; border: 0;
+  display: grid; place-items: center; border-radius: 50%;
+  background: var(--papier-jasny); border: 1.5px dashed var(--akcent);
+  box-shadow: 0 1px 4px rgba(75,64,47,.35);
+  cursor: pointer;
+}
+.znacznik-przyjaciela[hidden] { display: none; }
+.znacznik-przyjaciela svg { width: 12px; height: 12px; fill: var(--akcent); }
+.znacznik-przyjaciela:focus-visible { outline: 3px solid var(--tusz); outline-offset: 2px; }
+
+/* Podświetlenie wpisu, gdy przyjdzie się do niego z mapy. */
+.przyjaciel.wskazany { background: var(--papier-cien); border-radius: 6px; }
+
+.luka { padding: .75rem 0; border-bottom: 1px solid var(--kreska); }
+.luka:last-child { border-bottom: 0; }
+.luka h3 { margin: 0 0 .25rem; font-family: var(--szeryf); font-size: .95rem; font-weight: 600; }
+.luka p { margin: 0; font-size: .87rem; line-height: 1.5; color: var(--tusz-jasny); }
+
+.grupa-filtrow { margin-bottom: 1.1rem; }
+.grupa-filtrow h3 { margin: 0 0 .45rem; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--tusz-mgla); font-weight: 600; }
+.filtry { display: flex; flex-wrap: wrap; gap: .4rem; }
+.filtr {
+  min-height: 38px; padding: .35rem .7rem;
+  background: var(--papier-cien); border: 1px solid var(--kreska-mocna); border-radius: 19px;
+  font-size: .82rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.filtr[aria-pressed="true"] { background: var(--kolor, var(--tusz)); color: #FBF4E4; border-color: transparent; }
+.filtr .plamka { width: 10px; height: 10px; border-radius: 50%; background: var(--kolor); }
+.filtr[aria-pressed="true"] .plamka { background: #FBF4E4; }
+
+.pusto { padding: 1.6rem .5rem; text-align: center; color: var(--tusz-mgla); font-size: .9rem; line-height: 1.55; }
+
+/* ─────────── treść: kreator planu ─────────── */
+.pole { margin-bottom: 1.1rem; }
+.pole > label, .pole > h3 {
+  display: block; margin: 0 0 .4rem;
+  font-size: .78rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--tusz-mgla); font-weight: 600;
+}
+.godziny { display: flex; align-items: center; gap: .5rem; }
+.godziny input {
+  flex: 1; min-height: 44px; padding: .4rem .6rem;
+  background: var(--papier-cien); border: 1px solid var(--kreska-mocna); border-radius: 6px;
+  font: inherit; font-variant-numeric: tabular-nums; color: var(--tusz);
+}
+.pobyt { display: flex; align-items: center; gap: .5rem; }
+.pobyt input {
+  width: 84px; min-height: 44px; padding: .4rem .6rem;
+  background: var(--papier-cien); border: 1px solid var(--kreska-mocna); border-radius: 6px;
+  font: inherit; color: var(--tusz);
+}
+.pobyt span { font-size: .86rem; color: var(--tusz-jasny); }
+.przypis { margin: .35rem 0 0; font-size: .76rem; line-height: 1.45; color: var(--tusz-mgla); }
+.filtr .licznik-opcji { font-size: .72rem; opacity: .75; }
+.filtr:disabled { opacity: .4; cursor: not-allowed; }
+
+.propozycja { display: grid; grid-template-columns: auto 1fr; gap: .1rem .7rem; padding: .6rem 0; }
+.propozycja .godz { font-variant-numeric: tabular-nums; font-weight: 600; font-size: .84rem; white-space: nowrap; }
+.propozycja .tyt { font-size: .93rem; line-height: 1.3; }
+.propozycja .msc { grid-column: 2; font-size: .76rem; color: var(--tusz-mgla); margin-top: .15rem; }
+
+/* ─────────── atrybucja podkładu (wymagana licencją ODbL) ─────────── */
+#atrybucja {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  margin: 0; padding: 2px 56px 3px .55rem;
+  font-size: 10px; line-height: 1.3; color: var(--tusz-jasny);
+  background: rgba(242, 231, 210, .72);
+  border-top: 1px solid var(--kreska);
+  pointer-events: auto;
+}
+#atrybucja a { color: inherit; }
+
+/* ─────────── sterowanie zoomem ─────────── */
+#zoom { position: absolute; right: .55rem; bottom: 1.5rem; display: flex; flex-direction: column; gap: .35rem; }
+#zoom button {
+  width: 44px; height: 44px; font: 400 22px/1 var(--szeryf);
+  background: rgba(242,231,210,.94); border: 1px solid var(--kreska-mocna);
+  border-radius: 7px; cursor: pointer;
+}
+#zoom button:active { background: var(--papier-cien); }
+#zoom button svg { width: 20px; height: 20px; fill: var(--tusz); display: block; margin: auto; }
+#obroc.recznie { border-color: var(--akcent); }
+
+/* ─────────── intro ───────────
+   Trzy sceny: film (nieme najście na księgę) -> księga -> brama z animowaną
+   ulicą i przyciskiem wejścia. Mapa ładuje się pod spodem od pierwszej chwili,
+   więc pominięcie intra daje ją natychmiast. */
+#intro {
+  position: fixed; inset: 0; z-index: 60;
+  background: #120C08;
+  display: grid; place-items: center;
+  overflow: hidden;
+  opacity: 1; transition: opacity .5s ease;
+}
+#intro[hidden] { display: none; }
+#intro.znika { opacity: 0; pointer-events: none; }
+
+#intro-film {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  transition: opacity .6s ease;
+}
+#intro.scena-ksiega #intro-film,
+#intro.scena-brama #intro-film { opacity: 0; }
+
+/* tło dzielnicy — trzy warstwy paralaksy, jak w oryginale */
+/* overflow: warstwy mają inset -4% na potrzeby dryfu; bez przycięcia
+   wylewałyby się poza pas kadru i robiły szew nad obrazem. */
+#intro-tlo { position: absolute; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1s ease; }
+#intro.scena-brama #intro-tlo { opacity: 1; }
+#intro-tlo .warstwa {
+  position: absolute; inset: -4%;
+  background-position: 50%; background-size: cover; background-repeat: no-repeat;
+}
+#intro-tlo .daleko { filter: saturate(.9) brightness(.85); animation: dryf 26s ease-in-out infinite alternate; }
+#intro-tlo .srodek { animation: dryf 18s ease-in-out infinite alternate-reverse; }
+#intro-tlo .blisko { mix-blend-mode: multiply; opacity: .42; animation: dryf 12s ease-in-out infinite alternate; }
+#intro-tlo video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: .55; mix-blend-mode: screen;
+}
+#intro-tlo .zaslona {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, rgba(18,12,8,.12), rgba(18,12,8,.82) 78%);
+}
+@keyframes dryf { from { transform: scale(1.04) translate3d(-1%, 0, 0); } to { transform: scale(1.08) translate3d(1%, -1%, 0); } }
+
+/* księga */
+#intro-ksiega {
+  position: relative; z-index: 2;
+  width: min(58vw, 42vh); aspect-ratio: 3 / 4;
+  padding: 0; border: 0; background: none; cursor: pointer;
+  opacity: 0; transform: scale(.86);
+  transition: opacity .8s ease, transform .8s cubic-bezier(.22,.9,.3,1);
+}
+#intro.scena-ksiega #intro-ksiega, #intro.scena-brama #intro-ksiega { opacity: 1; transform: none; }
+#intro.scena-brama #intro-ksiega { transform: translateY(-9vh) scale(.72); cursor: default; }
+#intro-ksiega img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  border-radius: 3px 8px 8px 3px;
+  box-shadow: -6px 0 0 rgba(0,0,0,.35), 0 18px 46px rgba(0,0,0,.66);
+}
+#intro-ksiega:focus-visible { outline: 3px solid #E7D8BC; outline-offset: 6px; }
+
+#intro-podpowiedz {
+  position: absolute; left: 50%; bottom: 16vh; transform: translateX(-50%);
+  z-index: 3; margin: 0; color: #E7D8BC; opacity: 0;
+  font-family: var(--szeryf); font-size: .92rem; letter-spacing: .03em;
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+  transition: opacity .6s ease .5s;
+}
+#intro.scena-ksiega #intro-podpowiedz,
+#intro.czeka.scena-film #intro-podpowiedz { opacity: .85; animation: tetno 2.6s ease-in-out infinite; }
+#intro.czeka.scena-film { cursor: pointer; }
+@keyframes tetno { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+
+/* brama */
+#intro-brama {
+  position: absolute; left: 50%; top: 65%; transform: translate(-50%, -50%) scale(.9);
+  z-index: 3; display: grid; justify-items: center; gap: .7rem;
+  opacity: 0; pointer-events: none; transition: opacity .7s ease .35s, transform .7s ease .35s;
+}
+#intro.scena-brama #intro-brama { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+#intro-brama .cel {
+  min-height: 52px; padding: .8rem 2.1rem;
+  font-family: var(--szeryf); font-size: 1.06rem; letter-spacing: .06em;
+  color: #21170E; background: #E7D8BC;
+  border: 1px solid #C9B99C; border-radius: 4px; cursor: pointer;
+  box-shadow: 0 6px 22px rgba(0,0,0,.5);
+}
+#intro-brama .cel:hover { background: #F5EAD4; }
+#intro-brama .podpis { margin: 0; font-size: .74rem; color: rgba(231,216,188,.66); }
+
+#intro-pomin {
+  position: absolute; right: .8rem; top: .8rem; z-index: 4;
+  min-height: 44px; padding: .5rem 1rem;
+  color: #E7D8BC; background: rgba(231,216,188,.14);
+  border: 1px solid rgba(231,216,188,.34); border-radius: 6px;
+  font-size: .84rem; cursor: pointer;
+}
+#intro-pomin:hover { background: rgba(231,216,188,.24); }
+
+/* Film i tło są w proporcji 16:9. Rozciągnięte na cały portret telefonu
+   pokazują ledwie 26% szerokości kadru — reszta idzie pod nóż. Zamykamy je
+   w pasie o proporcji bliższej źródłu: widać wtedy ponad 45%, a ciemne pole
+   nad i pod czyta się jak kadr kinowy, nie jak błąd. */
+@media (max-aspect-ratio: 3/4) {
+  #intro-film,
+  #intro-tlo {
+    inset: 50% 0 auto 0;
+    height: 58vh;
+    transform: translateY(-50%);
+  }
+  #intro-ksiega { width: min(52vw, 34vh); }
+  #intro-podpowiedz { bottom: 12vh; }
+  #intro-brama { top: 72%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #intro-tlo .warstwa { animation: none; }
+  #intro.scena-ksiega #intro-podpowiedz { animation: none; }
+  #intro, #intro-film, #intro-ksiega, #intro-brama, #intro-tlo { transition: none; }
+}
+
+/* ─────────── ciemne paski interfejsu ───────────
+   Nadpisania zebrane w jednym miejscu, żeby dało się je zdjąć jednym cięciem. */
+header, #dni, #promo, #pasek { background: var(--pasek-tlo); border-color: var(--pasek-kreska); }
+header, #pasek { color: var(--pasek-tekst); }
+header h1 { color: var(--pasek-tekst); }
+header p  { color: var(--pasek-tekst-mgla); }
+
+#do-intra { border-color: var(--pasek-kreska); }
+#do-intra svg { fill: var(--pasek-tekst-mgla); }
+#do-intra:hover { background: rgba(240,228,202,.12); }
+
+#dni button { color: var(--pasek-tekst); border-color: rgba(240,228,202,.32); }
+#dni button[aria-pressed="true"] {
+  background: var(--pasek-tekst); color: var(--pasek-tlo); border-color: var(--pasek-tekst);
+}
+
+#promo .haslo { color: var(--pasek-tekst-mgla); }
+#promo .co    { color: var(--pasek-tekst); }
+#promo .zegar { color: var(--pasek-tekst-mgla); }
+#promo .zegar.trwa { color: var(--akcent-jasny); }
+#promo .sluchaj { background: var(--pasek-tekst); color: var(--pasek-tlo); }
+#promo .zwin { color: var(--pasek-tekst-mgla); }
+#promo .znak { border-color: rgba(240,228,202,.6); }
+
+#pasek button { color: var(--pasek-tekst-mgla); }
+#pasek button[aria-expanded="true"] { color: var(--pasek-tekst); background: rgba(240,228,202,.12); }
+
+/* Atrybucja siedzi na mapie, więc zostaje w barwach papieru. */
+
+/* ─────────── podgląd zdjęcia ─────────── */
+#lupa {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(38, 30, 20, .93);
+  display: grid; grid-template-rows: 1fr auto; place-items: center;
+  padding: 1rem;
+}
+#lupa[hidden] { display: none; }
+#lupa img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 3px; }
+#lupa .zamknij {
+  position: absolute; top: .6rem; right: .6rem; width: 44px; height: 44px;
+  background: rgba(250,243,228,.15); border: 0; border-radius: 8px; cursor: pointer;
+  display: grid; place-items: center;
+}
+#lupa .zamknij svg { width: 22px; height: 22px; fill: #FAF3E4; }
+#lupa .podpis { color: #E7D8BC; font-size: .8rem; padding-top: .7rem; text-align: center; }
+#lupa .krok {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 52px; height: 72px;
+  background: rgba(250,243,228,.13); border: 0; border-radius: 8px; cursor: pointer;
+  display: grid; place-items: center;
+}
+#lupa .krok[hidden] { display: none; }
+#lupa .krok:hover { background: rgba(250,243,228,.24); }
+#lupa .krok svg { width: 26px; height: 26px; fill: #FAF3E4; }
+#lupa .wstecz { left: .5rem; }
+#lupa .dalej  { right: .5rem; }
+#lupa .licznik-zdjec { color: rgba(231,216,188,.7); font-size: .72rem; }
+@media (max-width: 520px) {
+  #lupa .krok { width: 44px; height: 60px; }
+}
+
+/* ─────────── większe ekrany ─────────── */
+@media (min-width: 720px) {
+  #arkusz { right: auto; width: 400px; max-height: calc(100vh - 190px); border-radius: 0 14px 0 0; }
+  #pasek button { flex-direction: row; gap: .45rem; font-size: .8rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #arkusz, #nazwy, .pin { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tytuly">
+    <h1 id="tytul">Święto dzielnicy</h1>
+    <p id="podtytul"></p>
+  </div>
+  <button type="button" id="do-logo" hidden aria-label="O nas — Lucid Academy" title="O nas">
+    <img id="logo-naglowek" alt="">
+  </button>
+  <button type="button" id="do-intra" hidden aria-label="Obejrzyj intro od początku" title="Obejrzyj intro od początku">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5c2.5-.7 5.5-.5 8 1 2.5-1.5 5.5-1.7 8-1v13c-2.5-.7-5.5-.5-8 1-2.5-1.5-5.5-1.7-8-1zm8 3.4C10.2 7.3 8 6.9 6 7.1v9.5c2-.2 4.2.2 6 1.2 1.8-1 4-1.4 6-1.2V7.1c-2-.2-4.2.2-6 1.3z"/></svg>
+  </button>
+</header>
+
+<div id="dni" role="group" aria-label="Wybór dnia"></div>
+
+<aside id="promo" hidden aria-live="polite">
+  <span class="znak" id="promo-znak" aria-hidden="true"></span>
+  <button type="button" class="tresc" id="promo-tresc">
+    <p class="haslo" id="promo-haslo"></p>
+    <p class="co" id="promo-co"></p>
+    <p class="zegar" id="promo-zegar"></p>
+  </button>
+  <a class="sluchaj" id="promo-sluchaj" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span id="promo-etykieta">Posłuchaj</span>
+  </a>
+  <button type="button" class="zwin" id="promo-zwin" aria-label="Ukryj zapowiedź">✕</button>
+</aside>
+
+<main id="mapa">
+  <svg id="plansza" role="img" aria-label="Mapa dzielnicy z lokalizacjami wydarzeń">
+    <defs>
+      <!-- Korony drzew jako stippling — park poznaje się po fakturze, nie po zieleni. -->
+      <pattern id="korony" width="14" height="14" patternUnits="userSpaceOnUse">
+        <rect width="14" height="14" fill="var(--park)"/>
+        <g fill="var(--park-obrys)" opacity=".85">
+          <circle cx="3" cy="3.5" r="2.1"/><circle cx="9.5" cy="6" r="2.6"/>
+          <circle cx="5" cy="10" r="2.3"/><circle cx="12" cy="12" r="1.8"/>
+        </g>
+      </pattern>
+      <!-- Woda: kreskowanie jak na starych mapach, na zachowanym błękicie. -->
+      <pattern id="fale" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+        <rect width="9" height="9" fill="var(--woda)"/>
+        <path d="M0 3 H9 M0 7 H9" stroke="var(--woda-obrys)" stroke-width=".7" opacity=".7"/>
+      </pattern>
+      <!-- Budynki: delikatny szraf pod kątem. -->
+      <pattern id="mur" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="4" height="4" fill="var(--budynek)"/>
+        <path d="M0 0 V4" stroke="var(--budynek-obrys)" stroke-width=".5" opacity=".45"/>
+      </pattern>
+    </defs>
+    <g id="scena">
+      <g id="w-zielen"></g>
+      <g id="w-woda"></g>
+      <g id="w-budynki"></g>
+      <g id="w-pieszo"></g>
+      <g id="w-lokalne"></g>
+      <g id="w-glowne"></g>
+      <g id="nazwy"></g>
+      <g id="trasa"></g>
+    </g>
+  </svg>
+  <div id="piny"></div>
+  <div id="winieta" aria-hidden="true"></div>
+  <svg id="furnitura" aria-hidden="true"></svg>
+  <div id="zoom">
+    <button type="button" id="obroc" aria-label="Obróć mapę">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8"/></svg>
+    </button>
+    <button type="button" id="blizej" aria-label="Przybliż mapę">+</button>
+    <button type="button" id="dalej" aria-label="Oddal mapę">−</button>
+  </div>
+  <p id="atrybucja">Podkład: ©&nbsp;autorzy
+    <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, ODbL</p>
+</main>
+
+<nav id="pasek" aria-label="Sekcje"></nav>
+
+<section id="arkusz" hidden aria-labelledby="arkusz-tytul">
+  <div id="arkusz-gora">
+    <button type="button" id="wstecz" hidden aria-label="Wróć">
+      <svg viewBox="0 0 24 24"><path d="M15.5 3.6 7 12l8.5 8.4 1.6-1.6L10.2 12l6.9-6.8z"/></svg>
+    </button>
+    <h2 id="arkusz-tytul"></h2>
+    <button type="button" id="zamknij-arkusz" aria-label="Zamknij">
+      <svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3z"/></svg>
+    </button>
+  </div>
+  <div id="arkusz-tresc"></div>
+</section>
+
+<div id="intro" hidden>
+  <video id="intro-film" muted playsinline preload="auto" aria-hidden="true"></video>
+  <div id="intro-tlo" aria-hidden="true">
+    <div class="warstwa daleko"></div>
+    <div class="warstwa srodek"></div>
+    <video id="intro-animacja" muted playsinline loop preload="none"></video>
+    <div class="warstwa blisko"></div>
+    <div class="zaslona"></div>
+  </div>
+  <button type="button" id="intro-ksiega" aria-label="Otwórz księgę"><img id="intro-okladka" alt=""></button>
+  <p id="intro-podpowiedz">Dotknij księgi</p>
+  <div id="intro-brama">
+    <button type="button" class="cel" id="intro-wejdz">Rozpocznij</button>
+    <p class="podpis" id="intro-autor" hidden></p>
+  </div>
+  <button type="button" id="intro-pomin">Pomiń intro</button>
+</div>
+
+<div id="lupa" hidden>
+  <img id="lupa-obraz" alt="">
+  <p class="podpis" id="lupa-podpis"></p>
+  <button type="button" class="zamknij" id="zamknij-lupe" aria-label="Zamknij zdjęcie">
+    <svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3z"/></svg>
+  </button>
+  <button type="button" class="krok wstecz" id="lupa-wstecz" aria-label="Poprzednie zdjęcie">
+    <svg viewBox="0 0 24 24"><path d="M15.5 3.6 7 12l8.5 8.4 1.6-1.6L10.2 12l6.9-6.8z"/></svg>
+  </button>
+  <button type="button" class="krok dalej" id="lupa-dalej" aria-label="Następne zdjęcie">
+    <svg viewBox="0 0 24 24"><path d="M8.5 3.6 17 12l-8.5 8.4-1.6-1.6L13.8 12 6.9 5.2z"/></svg>
+  </button>
+</div>
+
+<script>
+/* Które święto wczytać. Silnik jest jeden, dane są dwa — wybór idzie z adresu
+   (?swieto=chelminskie), a bez niego z ustawienia poniżej.
+
+   document.write, bo to musi się wykonać w trakcie parsowania: skrypt niżej
+   zaczyna od `window.DANE` i liczy na gotowe dane, a strona ma działać także
+   otwarta z dysku, gdzie fetch jest zablokowany przez przeglądarkę.
+
+   Lista dozwolonych nazw nie jest ozdobą — bez niej dowolny adres wstrzyknąłby
+   ścieżkę do <script src>. */
+(function () {
+  var DOMYSLNE = 'chelminskie';
+  var DOZWOLONE = { bydgoskie: 1, chelminskie: 1 };
+  var m = /[?&]swieto=([a-z]+)/.exec(location.search);
+  var s = (m && DOZWOLONE[m[1]]) ? m[1] : DOMYSLNE;
+  document.write('<scr' + 'ipt src="dane/' + s + '.js"><\/scr' + 'ipt>');
+  document.write('<scr' + 'ipt src="dane/mapa-' + s + '.js"><\/scr' + 'ipt>');
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+
+  var DANE = window.DANE, MAPA = window.MAPA;
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ═══════════════ intro ═══════════════
+
+     Trzy sceny: nieme najście na księgę, księga do kliknięcia, brama
+     z animowaną ulicą i przyciskiem wejścia. Uruchamiamy je tutaj,
+     przed budową mapy, żeby nie mignął widok spod spodu — sama mapa
+     powstaje pod zasłoną i jest gotowa w chwili pominięcia intra.
+
+     Bez pola `intro` w danych strona otwiera się wprost na mapie. */
+  var pokazIntro = null;              // ustawiane tylko, gdy święto ma intro
+
+  (function intro() {
+    var cfg = DANE.swieto.intro;
+    var wezel = $('intro');
+    if (!cfg || !cfg.film || !wezel) return;
+
+    var KLUCZ = 'intro:' + (DANE.swieto.id || 'swieto');
+    var film = $('intro-film'), animacja = $('intro-animacja');
+    var bezRuchu = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var tloWczytane = false;
+
+    function scena(nazwa) { wezel.className = 'scena-' + nazwa; }
+
+    function doKsiegi() {
+      scena('ksiega');
+      try { film.pause(); } catch (e) {}
+      $('intro-ksiega').focus();
+    }
+
+    function doBramy() {
+      // Tło dociągamy dopiero tutaj — kto pominie intro, nie płaci za nie.
+      if (!tloWczytane) {
+        tloWczytane = true;
+        wezel.querySelector('.daleko').style.backgroundImage = 'url("' + cfg.tlo.daleko + '")';
+        wezel.querySelector('.srodek').style.backgroundImage = 'url("' + cfg.tlo.srodek + '")';
+        wezel.querySelector('.blisko').style.backgroundImage = 'url("' + cfg.tlo.blisko + '")';
+        if (!bezRuchu && cfg.tlo.animacja) {
+          animacja.src = cfg.tlo.animacja;
+          var p = animacja.play();
+          if (p && p.catch) p.catch(function () {});
+        }
+      }
+      scena('brama');
+      $('intro-wejdz').focus();
+    }
+
+    function zamknij() {
+      try { localStorage.setItem(KLUCZ, 'tak'); } catch (e) {}
+      wezel.classList.add('znika');
+      try { film.pause(); animacja.pause(); } catch (e) {}
+      setTimeout(function () {
+        wezel.hidden = true;
+        film.removeAttribute('src'); animacja.removeAttribute('src');
+        try { film.load(); animacja.load(); } catch (e) {}      // zwolnij pamięć
+      }, 520);
+    }
+
+    $('intro-ksiega').addEventListener('click', function () {
+      if (wezel.classList.contains('scena-ksiega')) doBramy();
+    });
+    $('intro-wejdz').addEventListener('click', zamknij);
+    $('intro-pomin').addEventListener('click', zamknij);
+    document.addEventListener('keydown', function (e) {
+      if (!wezel.hidden && e.key === 'Escape') zamknij();
+    });
+
+    /* Część przeglądarek blokuje autoodtwarzanie nawet niemych filmów
+       (tryb oszczędzania danych, ustawienia prywatności). Zamiast tracić
+       intro, zatrzymujemy się na pierwszej klatce i czekamy na dotknięcie. */
+    function naDotyk() {
+      wezel.removeEventListener('click', naDotyk);
+      wezel.classList.remove('czeka');
+      $('intro-podpowiedz').textContent = 'Dotknij księgi';
+      var p = film.play();
+      if (p && p.catch) p.catch(doKsiegi);
+    }
+
+    film.addEventListener('ended', doKsiegi);
+    film.addEventListener('error', doKsiegi);    // brak pliku nie może zablokować wejścia
+
+    /* Odpalane przy pierwszej wizycie i ponownie z przycisku w nagłówku.
+       Wszystko poza tym wywołaniem dzieje się raz. */
+    pokazIntro = function () {
+      $('intro-okladka').src = cfg.okladka;
+      if (cfg.zapros) $('intro-wejdz').textContent = cfg.zapros;
+      if (cfg.autor) { $('intro-autor').textContent = cfg.autor; $('intro-autor').hidden = false; }
+      wezel.hidden = false;
+      wezel.classList.remove('znika');
+      $('intro-podpowiedz').textContent = 'Dotknij księgi';
+
+      if (bezRuchu) { doKsiegi(); return; }      // bez najazdu — od razu księga
+
+      scena('film');
+      if (film.getAttribute('src') !== cfg.film) film.src = cfg.film;
+      try { film.currentTime = 0; } catch (e) {}
+      var start = film.play();
+      if (start && start.catch) start.catch(function () {
+        if (wezel.classList.contains('scena-film')) {
+          $('intro-podpowiedz').textContent = 'Dotknij, aby odtworzyć';
+          wezel.classList.add('czeka');
+          wezel.addEventListener('click', naDotyk);
+        }
+      });
+    };
+
+    // ?intro w adresie wymusza wstęp mimo zapisanej wizyty — wygodne przy pokazach.
+    var wymuszone = /(^|[?&#])intro(=|&|$)/.test(location.search + location.hash);
+    var widziane = false;
+    try { widziane = localStorage.getItem(KLUCZ) === 'tak'; } catch (e) {}
+    if (wymuszone || !widziane) pokazIntro();
+  })();
+
+  if (DANE.onas && DANE.onas.logoMale) {
+    $('logo-naglowek').src = DANE.onas.logoMale;
+    $('logo-naglowek').alt = DANE.onas.naglowek || '';
+    $('do-logo').hidden = false;
+    $('do-logo').addEventListener('click', pokazONas);
+  }
+
+  if (pokazIntro) {
+    $('do-intra').hidden = false;
+    $('do-intra').addEventListener('click', function () { pokazIntro(); });
+  }
+
+  /* ═══════════════ słowniki ═══════════════ */
+
+  var KATEGORIE = {}, TAGI = {}, LOKALIZACJE = {}, DNI = {};
+  DANE.kategorie.forEach(function (k) { KATEGORIE[k.id] = k; });
+  (DANE.tagi || []).forEach(function (t) { TAGI[t.id] = t; });
+  DANE.lokalizacje.forEach(function (l) { LOKALIZACJE[l.id] = l; });
+  DANE.swieto.dni.forEach(function (d) { DNI[d.id] = d; });
+
+  /* Nurty: mapa niesie dwa święta tego samego weekendu, robione przez tych
+     samych ludzi. Wydarzenie bez pola `nurt` należy do nurtu domyślnego. */
+  var NURTY = {}, NURT_DOMYSLNY = null;
+  (DANE.nurty || []).forEach(function (n) {
+    NURTY[n.id] = n;
+    if (n.domyslny && !NURT_DOMYSLNY) NURT_DOMYSLNY = n.id;
+  });
+  function nurtem(w) { return w.nurt || NURT_DOMYSLNY; }
+  function nurtObcy(w) { return NURT_DOMYSLNY && nurtem(w) !== NURT_DOMYSLNY; }
+
+  /* Biblioteka ikon. Dane mówią `ikona: 'nuta'`, rysunek siedzi w kodzie,
+     więc kolejne święto może użyć tych samych nazw. */
+  var IKONY = {
+    nuta:     'M9 3v10.6A3.5 3.5 0 1 0 11 17V8h6V3z',
+    talerz:   'M6 2v7a3 3 0 0 0 2 2.8V22h2V11.8A3 3 0 0 0 12 9V2h-1.6v6H9.6V2H8v6H6.6V2zM16 2c-1.4 1.4-2 4-2 6.5 0 1.9.8 3.1 2 3.4V22h2V2z',
+    nozyce:   'M9.6 3.4 12 9.2l2.4-5.8 1.8.8-2.9 6.7 1.3 3a3.4 3.4 0 1 1-1.8.8L12 12.9l-.8 1.8a3.4 3.4 0 1 1-1.8-.8l1.3-3-2.9-6.7zM6.9 16.2a1.5 1.5 0 1 0 1.3 2.7 1.5 1.5 0 0 0-1.3-2.7m10.2 0a1.5 1.5 0 1 0 1.3 2.7 1.5 1.5 0 0 0-1.3-2.7',
+    latawiec: 'M12 2 4 9.4 12 22l8-12.6zm0 3.1 5.4 5-5.4 8.5-5.4-8.5z',
+    dom:      'M12 3 2 11h3v10h5v-6h4v6h5V11h3z',
+    paleta:   'M12 3a9 9 0 0 0 0 18c1.3 0 2-.9 2-1.9 0-.5-.2-.9-.5-1.2-.3-.4-.5-.7-.5-1.2 0-1 .8-1.7 1.8-1.7H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7m-4.7 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m3.2 3.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3',
+    // „Warsztaty" to worek na ziny, cyrk, plastykę, gry i tango — te cztery
+    // pozwalają rozróżnić je na pinach, mimo wspólnej kategorii i koloru.
+    kula:     'M12 2.5a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2M5 13a2.6 2.6 0 1 1 0 5.2A2.6 2.6 0 0 1 5 13m14 0a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2',
+    taniec:   'M13.6 2.3a2 2 0 1 1 0 4 2 2 0 0 1 0-4M11 7.6h3.1L18 12l-1.6 1.5-2.6-2.8v2.6l3 7.6h-2.4l-2.6-6.3-3.4 6.3H6l4.3-8v-2.5l-2 2.5L7 11.6z',
+    pedzel:   'M18.4 2.4a2.2 2.2 0 0 1 3.2 3.1L14 13.2l-3.2-3.2zM9.4 11.6l3 3-1.7 1.7c-.6.6-1.2.9-2 1.1-1 .3-1.5.8-1.9 1.7-.5 1-1.7 1.9-3.1 1.9-.9 0-1.8-.3-2.3-.8 1-.3 1.5-1 1.7-1.9.3-1.2.9-2 2-2.4.8-.3 1.4-.7 1.9-1.3z',
+    kostka:   'M4.4 4.4h15.2v15.2H4.4zm3.7 2.9a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4m7.8 0a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4m-7.8 6.4a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4m7.8 0a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4m-3.9-3.2a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4',
+    punkt:    'M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12'
+  };
+  var IKONY_UI = {
+    program:  'M4 3h16v18H4zm3 4v2h10V7zm0 4v2h10v-2zm0 4v2h7v-2z',
+    plan:     'M9 2v2H5v18h14V4h-4V2zm-2 8h10v2H7zm0 4h7v2H7zM11 2h2v4h-2z',
+    filtry:   'M3 4h18l-7 8.2V21l-4-2.4v-6.4z',
+    koperta:  'M3 5h18v14H3zm2.4 2 6.6 5 6.6-5z',
+    serce:    'M12 20.6 4.6 13.2a4.7 4.7 0 0 1 6.6-6.7L12 7.3l.8-.8a4.7 4.7 0 0 1 6.6 6.7z',
+    luki:     'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m1 15h-2v-2h2zm.4-4.2-.4.3V14h-2v-1.6c0-.6.3-1.1.8-1.5l1-.7c.4-.3.6-.7.5-1.2-.1-.5-.5-.9-1-1-.7-.1-1.3.3-1.5.9l-1.9-.6A3.5 3.5 0 0 1 12.3 6c1.6.1 2.9 1.2 3.2 2.7.2 1.5-.5 2.9-1.7 3.6z',
+    nogi:     'M9 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4M7.6 7h2.2l3.4 4.6-2.2 2.2 3.4 4.4-1.6 1.3-4.2-5.4 1.8-1.8-1.4-1.9L7 14.4 3.6 20 2 19l3.8-6.3z',
+    kompas:   'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m3.6 6.4-2 5.2-5.2 2 2-5.2zM12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2'
+  };
+
+  function ikona(sciezka, klasa) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"' + (klasa ? ' class="' + klasa + '"' : '') +
+           '><path d="' + sciezka + '"/></svg>';
+  }
+  function bezpiecznie(t) {
+    return String(t == null ? '' : t)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ═══════════════ czas i odległość ═══════════════ */
+
+  function naMinuty(hhmm) {
+    if (!hhmm) return null;
+    var c = hhmm.split(':');
+    return (+c[0]) * 60 + (+c[1]);
+  }
+  function zMinut(m) {
+    var g = Math.floor(m / 60), n = m % 60;
+    return g + ':' + (n < 10 ? '0' : '') + n;
+  }
+  function godziny(w) { return w.do ? w.od + '–' + w.do : w.od; }
+
+  /** Odległość w linii prostej po GPS, w metrach. */
+  function odleglosc(a, b) {
+    var R = 6371000, rad = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  /* Prosta w linii powietrznej nie oddaje chodzenia po kwartałach — stąd
+     mnożnik 1,3. Tempo 80 m/min to spokojny krok w tłumie. */
+  var KRETOSC = 1.3, TEMPO = 80;
+  function przejscie(a, b) {
+    if (!a || !b) return null;
+    var m = odleglosc(a, b) * KRETOSC;
+    return { metry: Math.round(m), minuty: Math.max(1, Math.round(m / TEMPO)) };
+  }
+
+  /* ═══════════════ rzutowanie (etap 2) ═══════════════ */
+
+  /* Dzielnica ma 2549 x 1516 m, czyli jest z natury pozioma. Na telefonie
+     obrót o 90° w prawo wypełnia ekran, na szerokim monitorze przeciwnie —
+     zostawia pionowy pasek pośrodku. Dlatego orientacja jest zmienna,
+     a domyślnie wybiera ją arytmetyka: wygrywa ta, przy której mapa
+     wychodzi większa. Obrót siedzi w rzutowaniu, nie w transformacji SVG,
+     dzięki czemu podpisy ulic zostają poziome w obu ustawieniach. */
+  var OBROT = true;
+  function rzutuj(x, y) { return OBROT ? [MAPA.wysokosc - y, x] : [x, y]; }
+  /** Odwrotność rzutowania — potrzebna, żeby przy obrocie utrzymać środek kadru. */
+  function odrzutuj(rx, ry) { return OBROT ? [ry, MAPA.wysokosc - rx] : [rx, ry]; }
+  var PLOTNO = { w: 0, h: 0 };
+  function ustawPlotno() {
+    PLOTNO.w = OBROT ? MAPA.wysokosc : MAPA.szerokosc;
+    PLOTNO.h = OBROT ? MAPA.szerokosc : MAPA.wysokosc;
+  }
+  ustawPlotno();
+
+  function zGps(lat, lng) {
+    var r = MAPA.rzutowanie;
+    return rzutuj((lng - MAPA.bbox.zachod) * r.metrNaStopien * r.skalaDlugosci,
+                  (MAPA.bbox.polnoc - lat) * r.metrNaStopien);
+  }
+
+  function doSciezki(plaskie, zamkniety) {
+    var d = '';
+    for (var i = 0; i < plaskie.length; i += 2) {
+      var p = rzutuj(plaskie[i], plaskie[i + 1]);
+      d += (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+    }
+    return d + (zamkniety ? 'Z' : '');
+  }
+
+  function rysujPodklad() {
+    var W = MAPA.warstwy;
+    function warstwa(wezel, obiekty, klasa, tylkoZamkniete) {
+      var k = [];
+      for (var i = 0; i < obiekty.length; i++) {
+        var o = obiekty[i];
+        if (tylkoZamkniete && !o.z) continue;
+        k.push('<path class="' + klasa + '" d="' + doSciezki(o.p, !!o.z) + '"/>');
+      }
+      $(wezel).innerHTML = k.join('');
+    }
+    warstwa('w-zielen',  W.zielen,        'zielen');
+    warstwa('w-woda',    W.woda,          'woda', true);
+    warstwa('w-budynki', W.budynki,       'budynek');
+    warstwa('w-pieszo',  W.ulice.pieszo,  'pieszo');
+    warstwa('w-lokalne', W.ulice.lokalne, 'lokalne');
+    warstwa('w-glowne',  W.ulice.glowne,  'glowne');
+
+    // Rzeki są liniami, nie obszarami — wypełnione zalałyby pół mapy.
+    var rzeki = [];
+    W.woda.forEach(function (o) { if (!o.z) rzeki.push('<path class="rzeka" d="' + doSciezki(o.p, false) + '"/>'); });
+    $('w-woda').insertAdjacentHTML('beforeend', rzeki.join(''));
+  }
+
+  function nazwyUlic() {
+    var najlepsze = {};
+    MAPA.warstwy.ulice.glowne.concat(MAPA.warstwy.ulice.lokalne).forEach(function (o) {
+      if (!o.n || o.p.length < 4) return;
+      var dl = 0;
+      for (var j = 2; j < o.p.length; j += 2) dl += Math.hypot(o.p[j] - o.p[j - 2], o.p[j + 1] - o.p[j - 1]);
+      if (!najlepsze[o.n] || dl > najlepsze[o.n].dl) najlepsze[o.n] = { o: o, dl: dl };
+    });
+    var k = [];
+    Object.keys(najlepsze).forEach(function (nazwa) {
+      var wpis = najlepsze[nazwa];
+      if (wpis.dl < 60) return;
+      var p = wpis.o.p, najD = 0, a = null, b = null;
+      for (var j = 2; j < p.length; j += 2) {
+        var d = Math.hypot(p[j] - p[j - 2], p[j + 1] - p[j - 1]);
+        if (d > najD) { najD = d; a = rzutuj(p[j - 2], p[j - 1]); b = rzutuj(p[j], p[j + 1]); }
+      }
+      if (!a || najD < 40) return;
+      var kat = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+      if (kat > 90) kat -= 180;
+      if (kat < -90) kat += 180;
+      k.push('<text transform="translate(' + ((a[0] + b[0]) / 2).toFixed(1) + ' ' + ((a[1] + b[1]) / 2).toFixed(1) +
+             ') rotate(' + kat.toFixed(1) + ')" dy="-3">' + bezpiecznie(nazwa) + '</text>');
+    });
+    $('nazwy').innerHTML = k.join('');
+  }
+
+  /* ═══════════════ stan ═══════════════ */
+
+  var KLUCZ = 'plan:' + (DANE.swieto.id || 'swieto');
+  var stan = {
+    dzien: 'wszystkie',
+    kategorie: {},          // id -> true (pusty zbiór = wszystkie)
+    tagi: {},
+    nurty: {},
+    plan: {},               // id wydarzenia -> true
+    widok: null
+  };
+
+  try {
+    var zapis = JSON.parse(localStorage.getItem(KLUCZ) || '{}');
+    if (zapis && typeof zapis === 'object') {
+      DANE.wydarzenia.forEach(function (w) { if (zapis[w.id]) stan.plan[w.id] = true; });
+    }
+  } catch (e) { /* wyłączony localStorage nie może wywrócić strony */ }
+
+  function zapiszPlan() {
+    try { localStorage.setItem(KLUCZ, JSON.stringify(stan.plan)); } catch (e) {}
+  }
+  function wPlanie(id) { return !!stan.plan[id]; }
+  function ilePlanu() { return Object.keys(stan.plan).length; }
+
+  /* Planer liczy czas przejścia między punktami i ostrzega, gdy plan się nie spina.
+     To ma sens na Bydgoskim, gdzie wydarzenia dzieli kilkaset metrów i cały dzień.
+     Na Chełmińskim całe święto trwa trzy godziny na terenie 67 x 73 m, wszystkie
+     stoiska są otwarte przez cały czas, a przejście między nimi zajmuje pół minuty
+     — planer odpowiadałby na pytanie, którego nikt tam nie zadaje.
+     `planer: false` w danych wycina go razem z trasą na mapie. */
+  var PLANER = DANE.swieto.planer !== false;
+
+  function ileWybrano(zbior) { return Object.keys(zbior).length; }
+
+  function pasuje(w) {
+    if (stan.dzien !== 'wszystkie' && w.dzien !== stan.dzien) return false;
+    if (ileWybrano(stan.nurty) && !stan.nurty[nurtem(w)]) return false;
+    if (ileWybrano(stan.kategorie) && !stan.kategorie[w.kategoria]) return false;
+    var wybraneTagi = Object.keys(stan.tagi);
+    for (var i = 0; i < wybraneTagi.length; i++) {
+      if (w.tagi.indexOf(wybraneTagi[i]) === -1) return false;   // tagi łączymy przez ORAZ
+    }
+    return true;
+  }
+
+  function wydarzeniaLokalizacji(idLok, tylkoPasujace) {
+    return DANE.wydarzenia.filter(function (w) {
+      return w.lokalizacja === idLok && (!tylkoPasujace || pasuje(w));
+    });
+  }
+
+  function posortowane(lista) {
+    var kolejnoscDni = {};
+    DANE.swieto.dni.forEach(function (d, i) { kolejnoscDni[d.id] = i; });
+    return lista.slice().sort(function (a, b) {
+      return (kolejnoscDni[a.dzien] - kolejnoscDni[b.dzien]) || (naMinuty(a.od) - naMinuty(b.od));
+    });
+  }
+
+  /* ═══════════════ piny ═══════════════ */
+
+  var piny = [];
+  /* Czy to święto numeruje swoje punkty. Rozstrzyga się raz: jeśli tak,
+     liczby na mapie znaczą wyłącznie „numer stoiska od organizatorów”. */
+  var NUMEROWANE = DANE.lokalizacje.some(function (l) { return l.numer != null; });
+
+  function zbudujPiny() {
+    var wezel = $('piny');
+    DANE.lokalizacje.forEach(function (l) {
+      if (!l.gps) return;                       // bez współrzędnych nie ma czego stawiać
+      var poz = zGps(l.gps.lat, l.gps.lng);
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pin' + (l.przyblizone ? ' przyblizony' : '');
+      b.innerHTML = '<span class="medalion"></span>';
+      b.addEventListener('click', function () { pokazLokalizacje(l.id); });
+      wezel.appendChild(b);
+      piny.push({ lok: l, wezel: b, medalion: b.firstChild, x: poz[0], y: poz[1] });
+    });
+  }
+
+  /** Po zmianie orientacji piny stoją w innym miejscu płótna. */
+  function przeliczPozycjePinow() {
+    piny.forEach(function (p) {
+      var poz = zGps(p.lok.gps.lat, p.lok.gps.lng);
+      p.x = poz[0]; p.y = poz[1];
+    });
+  }
+
+  function odswiezPiny() {
+    piny.forEach(function (p) {
+      var lista = wydarzeniaLokalizacji(p.lok.id, true);
+      p.wezel.classList.toggle('przygaszony', lista.length === 0);
+      p.wezel.disabled = lista.length === 0;
+
+      var kategorie = {};
+      lista.forEach(function (w) { kategorie[w.kategoria] = true; });
+      var klucze = Object.keys(kategorie);
+      // Jedna kategoria = jej kolor i ikona. Kilka = neutralny tusz,
+      // bo wybieranie jednej z nich kłamałoby.
+      var kat = klucze.length === 1 ? KATEGORIE[klucze[0]] : null;
+      p.wezel.style.setProperty('--kolor', kat ? kat.kolor : 'var(--wiele)');
+      /* Przy jednym wydarzeniu pod pinem jego własna ikona bije ikonę
+         kategorii — inaczej cyrk i warsztaty plastyczne dostają te same
+         nożyczki, bo obie rzeczy siedzą w kategorii „warsztaty". */
+      var nazwaIkony = (lista.length === 1 && lista[0].ikona) || (kat && kat.ikona);
+      /* Jeśli lokalizacja ma numer od organizatorów, to on idzie na pin, nie ikona.
+         Na Chełmińskim numery 1-32 są wspólnym językiem strony, wydrukowanego
+         programu i tabliczek przy namiotach — ikona nożyczek nie powie nikomu,
+         że stoi przed stoiskiem numer 30, a numer powie. */
+      p.medalion.innerHTML = (p.lok.numer != null)
+        ? '<span class="numer">' + p.lok.numer + '</span>'
+        : ikona(IKONY[nazwaIkony] || IKONY.punkt) +
+          /* Odznaka z licznikiem tylko tam, gdzie piny nie noszą numerów.
+             Inaczej scena z 15 punktami programu dostaje odznakę „15”
+             obok wieży z numerem 15 i obie liczby znaczą co innego. */
+          (lista.length > 1 && !NUMEROWANE ? '<span class="ile">' + lista.length + '</span>' : '');
+
+      var wPlan = lista.some(function (w) { return wPlanie(w.id); });
+      p.wezel.classList.toggle('wplanie', wPlan);
+
+      p.wezel.setAttribute('aria-label',
+        p.lok.nazwa + ', ' + p.lok.adres + '. ' +
+        (lista.length === 0 ? 'Brak wydarzeń przy tych filtrach'
+          : lista.length + (lista.length === 1 ? ' wydarzenie' : ' wydarzenia')) +
+        (p.lok.przyblizone ? '. Położenie przybliżone' : ''));
+    });
+  }
+
+  /* ═══════════════ trasa planu ═══════════════ */
+
+  function odswiezTrase() {
+    if (!PLANER) return;
+    var wybrane = posortowane(DANE.wydarzenia.filter(function (w) {
+      return wPlanie(w.id) && (stan.dzien === 'wszystkie' || w.dzien === stan.dzien);
+    }));
+
+    var wgDni = {};
+    wybrane.forEach(function (w) { (wgDni[w.dzien] = wgDni[w.dzien] || []).push(w); });
+
+    var kawalki = [];
+    Object.keys(wgDni).forEach(function (dzien) {
+      var punkty = [];
+      wgDni[dzien].forEach(function (w) {
+        var l = LOKALIZACJE[w.lokalizacja];
+        if (!l || !l.gps) return;
+        var p = zGps(l.gps.lat, l.gps.lng);
+        // Kolejne wydarzenia w tym samym miejscu nie tworzą odcinka.
+        if (punkty.length && Math.abs(punkty[punkty.length - 1][0] - p[0]) < 1 &&
+            Math.abs(punkty[punkty.length - 1][1] - p[1]) < 1) return;
+        punkty.push(p);
+      });
+      for (var i = 1; i < punkty.length; i++) {
+        var a = punkty[i - 1], b = punkty[i];
+        var sx = (a[0] + b[0]) / 2, sy = (a[1] + b[1]) / 2;
+        var dx = b[0] - a[0], dy = b[1] - a[1];
+        var dl = Math.hypot(dx, dy) || 1;
+        // Punkt sterujący odsunięty prostopadle — stąd łagodny łuk zamiast prostej.
+        var wyg = dl * 0.16;
+        kawalki.push('<path d="M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) +
+          ' Q' + (sx - dy / dl * wyg).toFixed(1) + ' ' + (sy + dx / dl * wyg).toFixed(1) +
+          ' ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) + '"/>');
+      }
+    });
+    $('trasa').innerHTML = kawalki.join('');
+  }
+
+  /* ═══════════════ przesuwanie i zoom (etap 2) ═══════════════ */
+
+  var mapa = $('mapa'), plansza = $('plansza'), scena = $('scena'), wezelNazw = $('nazwy');
+  var k = 1, tx = 0, ty = 0, kDopasowane = 1, wPx = 0, hPx = 0;
+  var PROG_NAZW = 2.2;
+
+  function dopasuj() {
+    var r = mapa.getBoundingClientRect();
+    wPx = Math.max(1, Math.round(r.width));
+    hPx = Math.max(1, Math.round(r.height));
+    plansza.setAttribute('viewBox', '0 0 ' + wPx + ' ' + hPx);   // 1 jednostka SVG = 1 px
+    kDopasowane = Math.min(wPx / PLOTNO.w, hPx / PLOTNO.h) * 0.98;
+  }
+
+  /* ── orientacja: automat plus możliwość nadpisania ── */
+
+  var KLUCZ_ORIENTACJI = 'orientacja:' + (DANE.swieto.id || 'swieto');
+  var wyborOrientacji = 'auto';                       // 'auto' | 'pion' | 'poziom'
+  try {
+    var zapisana = localStorage.getItem(KLUCZ_ORIENTACJI);
+    if (zapisana === 'pion' || zapisana === 'poziom') wyborOrientacji = zapisana;
+  } catch (e) {}
+
+  /** Skala dopasowania przy zadanej orientacji — tym rozstrzygamy, która wygrywa. */
+  function skalaPrzy(obrot) {
+    return Math.min(wPx / (obrot ? MAPA.wysokosc : MAPA.szerokosc),
+                    hPx / (obrot ? MAPA.szerokosc : MAPA.wysokosc));
+  }
+  function najlepszaOrientacja() {
+    if (wyborOrientacji === 'pion') return true;
+    if (wyborOrientacji === 'poziom') return false;
+    return skalaPrzy(true) >= skalaPrzy(false);
+  }
+
+  function zastosujOrientacje(nowy, zachowajSrodek) {
+    if (nowy === OBROT) return false;
+    var krotnosc = kDopasowane > 0 ? k / kDopasowane : 1;
+    var srodek = (zachowajSrodek && kDopasowane > 0)
+      ? odrzutuj((wPx / 2 - tx) / k, (hPx / 2 - ty) / k)   // zapamiętaj punkt pod środkiem ekranu
+      : null;
+
+    OBROT = nowy;
+    ustawPlotno();
+    rysujPodklad();
+    nazwyUlic();
+    przeliczPozycjePinow();
+    przeliczZnaczniki();
+    odswiezTrase();
+    dopasuj();
+
+    k = kDopasowane * krotnosc;
+    if (srodek) {
+      var p = rzutuj(srodek[0], srodek[1]);
+      tx = wPx / 2 - p[0] * k;
+      ty = hPx / 2 - p[1] * k;
+    } else {
+      tx = (wPx - PLOTNO.w * k) / 2;
+      ty = (hPx - PLOTNO.h * k) / 2;
+    }
+    rysuj();
+    odswiezPrzyciskObrotu();
+    return true;
+  }
+
+  function odswiezPrzyciskObrotu() {
+    var b = $('obroc');
+    b.classList.toggle('recznie', wyborOrientacji !== 'auto');
+    b.setAttribute('aria-label', OBROT ? 'Przełącz mapę na widok poziomy' : 'Przełącz mapę na widok pionowy');
+    b.title = (OBROT ? 'Widok pionowy' : 'Widok poziomy') +
+      (wyborOrientacji === 'auto' ? ' (dobrany automatycznie)' : ' (ustawiony ręcznie)');
+  }
+
+  $('obroc').addEventListener('click', function () {
+    wyborOrientacji = OBROT ? 'poziom' : 'pion';
+    try { localStorage.setItem(KLUCZ_ORIENTACJI, wyborOrientacji); } catch (e) {}
+    zastosujOrientacje(!OBROT, true);
+  });
+
+  function ogranicz() {
+    k = Math.min(kDopasowane * 9, Math.max(kDopasowane * 0.85, k));
+    var szer = PLOTNO.w * k, wys = PLOTNO.h * k, luz = 0.35;
+    tx = Math.min(wPx * luz, Math.max(wPx - szer - wPx * luz, tx));
+    ty = Math.min(hPx * luz, Math.max(hPx - wys - hPx * luz, ty));
+    if (szer < wPx) tx = (wPx - szer) / 2;
+    if (wys < hPx) ty = (hPx - wys) / 2;
+  }
+
+  /* Bydgoska 50 i 52 to sąsiednie kamienice, Sienkiewicza 11 i 13 też —
+     przy pełnym oddaleniu ich piny leżą na sobie i dolnego nie da się
+     kliknąć. Rozpychamy je delikatnie, z ograniczeniem, żeby nie odjechały
+     od swojego miejsca. Gdy przybliżysz na tyle, że i tak się nie stykają,
+     przesunięcie samo znika. */
+  var MIN_ODSTEP = 34, MAKS_ODSUNIECIE = 20;
+  var kotwice = [];
+
+  function rozsunPiny() {
+    kotwice = [];
+    /* Rozpychamy piny i widoczne serduszka razem — cztery z pięciu
+       przyjaciół siedzi pod pinami wydarzeń, a Trafo Cafe wręcz dokładnie
+       na swoim własnym. Wspólne rozpychanie rozwiązuje oba przypadki:
+       przy pinie serduszko odsunie się samo, samotne zostanie na miejscu. */
+    // Wszystkie obiekty dostają pozycję; z rozpychania wypadają tylko te,
+    // których i tak nie widać — przygaszone piny i schowane serduszka.
+    var obiekty = piny.concat(znacznikiP);
+    var n = obiekty.length, i, j, poz = [];
+    var liczySie = function (o) { return !o.wezel.disabled && !o.wezel.hidden; };
+    for (i = 0; i < n; i++) {
+      poz.push({ x: obiekty[i].x * k + tx, y: obiekty[i].y * k + ty, bx: obiekty[i].x * k + tx, by: obiekty[i].y * k + ty });
+    }
+    for (var przebieg = 0; przebieg < 6; przebieg++) {
+      var ruszyl = false;
+      for (i = 0; i < n; i++) {
+        if (!liczySie(obiekty[i])) continue;
+        for (j = i + 1; j < n; j++) {
+          if (!liczySie(obiekty[j])) continue;
+          var dx = poz[j].x - poz[i].x, dy = poz[j].y - poz[i].y;
+          var d = Math.hypot(dx, dy);
+          if (d >= MIN_ODSTEP) continue;
+          // Piny dokładnie w tym samym punkcie trzeba rozepchnąć w losowym,
+          // ale stałym kierunku — inaczej dzielimy przez zero.
+          if (d < 0.01) { dx = Math.cos(i * 2.4); dy = Math.sin(i * 2.4); d = 1; }
+          var pchniecie = (MIN_ODSTEP - d) / 2;
+          poz[i].x -= dx / d * pchniecie; poz[i].y -= dy / d * pchniecie;
+          poz[j].x += dx / d * pchniecie; poz[j].y += dy / d * pchniecie;
+          ruszyl = true;
+        }
+      }
+      if (!ruszyl) break;
+    }
+    for (i = 0; i < n; i++) {
+      var ox = poz[i].x - poz[i].bx, oy = poz[i].y - poz[i].by;
+      var dl = Math.hypot(ox, oy);
+      if (dl > MAKS_ODSUNIECIE) { ox = ox / dl * MAKS_ODSUNIECIE; oy = oy / dl * MAKS_ODSUNIECIE; }
+      obiekty[i].wezel.style.transform =
+        'translate(' + (poz[i].bx + ox).toFixed(1) + 'px,' + (poz[i].by + oy).toFixed(1) + 'px)';
+      // Odsunięty znak nie stoi już dokładnie na swoim miejscu, więc
+      // zaznaczamy prawdziwy punkt kropką. Mapa ma nie kłamać.
+      if (dl > 2 && liczySie(obiekty[i])) kotwice.push([poz[i].bx, poz[i].by]);
+    }
+  }
+
+  /* Wzory siedzą w układzie współrzędnych mapy, więc bez korekty rosłyby razem
+     z przybliżeniem — przy dziewięciokrotnym zoomie korony drzew zrobiłyby się
+     wielkimi kołami. Kontrskalujemy je, tak samo jak kreski trzymamy
+     w non-scaling-stroke: tusz jest na ekranie, geometria pod spodem. */
+  var WZORY = [['korony', ''], ['fale', ' rotate(-18)'], ['mur', ' rotate(45)']];
+  function skalujWzory() {
+    var s = (1 / k).toFixed(4);
+    for (var i = 0; i < WZORY.length; i++) {
+      var w = $(WZORY[i][0]);
+      if (w) w.setAttribute('patternTransform', 'scale(' + s + ')' + WZORY[i][1]);
+    }
+  }
+
+  var czeka = false;
+  function rysuj() {
+    if (czeka) return;
+    czeka = true;
+    requestAnimationFrame(function () {
+      czeka = false;
+      ogranicz();
+      scena.setAttribute('transform', 'translate(' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ') scale(' + k.toFixed(5) + ')');
+      skalujWzory();
+      rozsunPiny();
+      for (var z = 0; z < znacznikiP.length; z++) {
+        znacznikiP[z].wezel.style.transform =
+          'translate(' + (znacznikiP[z].x * k + tx).toFixed(1) + 'px,' + (znacznikiP[z].y * k + ty).toFixed(1) + 'px)';
+      }
+      wezelNazw.classList.toggle('widoczne', k > kDopasowane * PROG_NAZW);
+      rysujFurniture();
+    });
+  }
+
+  function zoomWokol(x, y, mnoznik) {
+    var poprzednie = k;
+    k *= mnoznik; ogranicz();
+    var faktyczny = k / poprzednie;
+    tx = x - (x - tx) * faktyczny;
+    ty = y - (y - ty) * faktyczny;
+    rysuj();
+  }
+
+  /** Ustawia widok na punkcie mapy, zostawiając miejsce na arkusz. */
+  function pokazPunkt(x, y, docelowe) {
+    if (docelowe) k = Math.max(k, kDopasowane * docelowe);
+    ogranicz();
+    var wolneY = arkuszOtwarty() ? hPx * 0.28 : hPx * 0.5;
+    tx = wPx / 2 - x * k;
+    ty = wolneY - y * k;
+    rysuj();
+  }
+
+  var wskazniki = new Map(), poprzedniDystans = 0, poprzedniSrodek = null;
+
+  mapa.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.pin') || e.target.closest('#zoom')) return;
+    mapa.setPointerCapture(e.pointerId);
+    wskazniki.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    poprzedniDystans = 0;
+  });
+
+  mapa.addEventListener('pointermove', function (e) {
+    if (!wskazniki.has(e.pointerId)) return;
+    e.preventDefault();
+    var stary = wskazniki.get(e.pointerId);
+    wskazniki.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    var lista = Array.from(wskazniki.values()), pud = mapa.getBoundingClientRect();
+
+    if (lista.length === 1) {
+      tx += e.clientX - stary.x; ty += e.clientY - stary.y;
+      rysuj(); return;
+    }
+    var dystans = Math.hypot(lista[0].x - lista[1].x, lista[0].y - lista[1].y);
+    var srodek = { x: (lista[0].x + lista[1].x) / 2 - pud.left, y: (lista[0].y + lista[1].y) / 2 - pud.top };
+    if (poprzedniDystans > 0) {
+      if (poprzedniSrodek) { tx += srodek.x - poprzedniSrodek.x; ty += srodek.y - poprzedniSrodek.y; }
+      zoomWokol(srodek.x, srodek.y, dystans / poprzedniDystans);
+    }
+    poprzedniDystans = dystans; poprzedniSrodek = srodek;
+  });
+
+  function koniecGestu(e) {
+    wskazniki.delete(e.pointerId);
+    if (wskazniki.size < 2) { poprzedniDystans = 0; poprzedniSrodek = null; }
+  }
+  mapa.addEventListener('pointerup', koniecGestu);
+  mapa.addEventListener('pointercancel', koniecGestu);
+
+  mapa.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var pud = mapa.getBoundingClientRect();
+    zoomWokol(e.clientX - pud.left, e.clientY - pud.top, Math.exp(-e.deltaY * 0.0016));
+  }, { passive: false });
+
+  $('blizej').addEventListener('click', function () { zoomWokol(wPx / 2, hPx / 2, 1.45); });
+  $('dalej').addEventListener('click', function () { zoomWokol(wPx / 2, hPx / 2, 1 / 1.45); });
+
+  /* ═══════════════ róża wiatrów i skala ═══════════════ */
+
+  var furnitura = $('furnitura');
+  var STOPNIE = [25, 50, 100, 200, 500, 1000, 2000];
+
+  function rozaWiatrow(cx, cy, r) {
+    // Mapa jest obrócona o 90° w prawo, więc północ wskazuje w prawo ekranu.
+    var obrot = OBROT ? 90 : 0, ramiona = '';
+    for (var i = 0; i < 8; i++) {
+      var dlugie = i % 2 === 0, dl = dlugie ? r : r * 0.52, sz = dlugie ? r * 0.16 : r * 0.11;
+      ramiona += '<g transform="rotate(' + (i * 45) + ')">' +
+        '<path class="' + (dlugie ? 'roza-ramie' : 'roza-ramie-jasne') + '" d="M0 0 L' + sz + ' ' + (-dl * 0.42) + ' L0 ' + (-dl) + ' Z"/>' +
+        '<path class="roza-ramie-jasne" d="M0 0 L' + (-sz) + ' ' + (-dl * 0.42) + ' L0 ' + (-dl) + ' Z"/></g>';
+    }
+    return '<g transform="translate(' + cx + ' ' + cy + ') rotate(' + obrot + ')">' +
+      '<circle class="roza-linia" r="' + (r * 0.62) + '"/><circle class="roza-linia" r="' + (r * 0.3) + '"/>' + ramiona +
+      '<g transform="rotate(' + (-obrot) + ')"><text x="' + (OBROT ? r + 9 : 0) + '" y="' + (OBROT ? 4 : -r - 5) +
+      '" font-size="12" font-weight="700" text-anchor="middle">N</text></g></g>';
+  }
+
+  /* Ozdobna ramka i narożniki — w warstwie ekranowej, nie w mapie, więc
+     obramowują okno i nie jadą z geometrią. Trzymają się krawędzi, gdzie
+     i tak nie ma pinów. */
+  function ramka(w, h) {
+    function naroznik(x, y, obr) {
+      return '<g transform="translate(' + x + ' ' + y + ') rotate(' + obr + ')" fill="none" ' +
+        'stroke="var(--tusz)" stroke-width="1.5" opacity=".5">' +
+        '<path d="M5 34 C5 15 15 5 34 5"/>' +
+        '<path d="M10 38 C10 21 21 10 38 10" stroke-width=".85"/>' +
+        '<path d="M17 12 C26 12 31 7 29 2" stroke-width=".8"/>' +
+        '<path d="M12 17 C12 26 7 31 2 29" stroke-width=".8"/>' +
+        '<circle cx="20" cy="20" r="2.2" fill="var(--tusz)" stroke="none" opacity=".7"/></g>';
+    }
+    return '<g pointer-events="none">' +
+      '<rect x="7" y="7" width="' + (w - 14) + '" height="' + (h - 14) + '" fill="none" stroke="var(--tusz)" stroke-width="2" opacity=".42"/>' +
+      '<rect x="12" y="12" width="' + (w - 24) + '" height="' + (h - 24) + '" fill="none" stroke="var(--tusz)" stroke-width=".7" opacity=".3"/>' +
+      naroznik(12, 12, 0) + naroznik(w - 12, 12, 90) +
+      naroznik(w - 12, h - 12, 180) + naroznik(12, h - 12, 270) + '</g>';
+  }
+
+  function rysujFurniture() {
+    var metry = STOPNIE[0];
+    for (var i = 0; i < STOPNIE.length; i++) if (STOPNIE[i] * k <= 130) metry = STOPNIE[i];
+    var dl = metry * k, y0 = hPx - 44;
+    furnitura.setAttribute('viewBox', '0 0 ' + wPx + ' ' + hPx);
+        var kropki = kotwice.map(function (p) {
+      return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.5" fill="var(--tusz)" opacity=".55"/>';
+    }).join('');
+    furnitura.innerHTML = ramka(wPx, hPx) + rozaWiatrow(wPx - 42, 46, 22) + kropki +
+      '<g transform="translate(14 ' + y0 + ')">' +
+        '<path class="skala-kreska" d="M0 -7 L0 0 L' + dl.toFixed(1) + ' 0 L' + dl.toFixed(1) + ' -7"/>' +
+        '<path class="skala-kreska" d="M' + (dl / 2).toFixed(1) + ' -4 L' + (dl / 2).toFixed(1) + ' 0"/>' +
+        '<text x="' + (dl / 2).toFixed(1) + '" y="14" font-size="11" text-anchor="middle">' +
+        (metry >= 1000 ? (metry / 1000) + ' km' : metry + ' m') + '</text></g>';
+  }
+
+  /* ═══════════════ arkusz ═══════════════ */
+
+  var arkusz = $('arkusz'), tresc = $('arkusz-tresc'), tytulArkusza = $('arkusz-tytul'), wstecz = $('wstecz');
+  var powrot = null, ostatnioAktywny = null;
+
+  function arkuszOtwarty() { return arkusz.classList.contains('otwarty'); }
+
+  function otworzArkusz(tytul, html, naWstecz) {
+    znacznikiPrzyjaciol(false);       // pokaże je z powrotem tylko widok przyjaciół
+    if (!arkuszOtwarty()) ostatnioAktywny = document.activeElement;
+    arkusz.hidden = false;
+    tytulArkusza.textContent = tytul;
+    tresc.innerHTML = html;
+    tresc.scrollTop = 0;
+    powrot = naWstecz || null;
+    wstecz.hidden = !powrot;
+    requestAnimationFrame(function () { arkusz.classList.add('otwarty'); });
+    odswiezPasek();
+  }
+
+  function zamknijArkusz() {
+    znacznikiPrzyjaciol(false);
+    arkusz.classList.remove('otwarty');
+    stan.widok = null;
+    powrot = null;
+    wstecz.hidden = true;
+    odswiezPasek();
+    if (ostatnioAktywny && ostatnioAktywny.isConnected) ostatnioAktywny.focus();
+    setTimeout(function () { if (!arkuszOtwarty()) arkusz.hidden = true; }, 260);
+  }
+
+  $('zamknij-arkusz').addEventListener('click', zamknijArkusz);
+  wstecz.addEventListener('click', function () { if (powrot) powrot(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('lupa').hidden) { zamknijLupe(); return; }
+    if (arkuszOtwarty()) zamknijArkusz();
+  });
+
+  /* ═══════════════ widok: lokalizacja ═══════════════ */
+
+  function pokazLokalizacje(idLok) {
+    var l = LOKALIZACJE[idLok];
+    var lista = posortowane(wydarzeniaLokalizacji(idLok, true));
+    stan.widok = 'lokalizacja';
+
+    if (lista.length === 1) { pokazWydarzenie(lista[0].id, function () { pokazLokalizacje(idLok); }); return; }
+
+    var html = '<p class="meta"><b>' + bezpiecznie(l.adres) + '</b></p>' +
+      (l.przyblizone ? '<p class="brak-opisu">Położenie przybliżone — organizatorzy nie podali dokładnej pinezki.</p>' : '') +
+      (lista.length ? listaWydarzen(lista, true) : '<p class="pusto">Przy obecnych filtrach nic tu nie ma.</p>') +
+      przyciskNawigacji(l);
+
+    otworzArkusz(l.nazwa, html);
+    podepnijListe();
+    podepnijNawigacje();
+    var p = zGps(l.gps.lat, l.gps.lng);
+    pokazPunkt(p[0], p[1], 3);
+  }
+
+  function przyciskNawigacji(l) {
+    if (!l || !l.gps) return '';
+    return '<div class="dzialania"><a class="przycisk" target="_blank" rel="noopener" ' +
+      'href="https://www.google.com/maps/dir/?api=1&destination=' + l.gps.lat + ',' + l.gps.lng + '">' +
+      ikona(IKONY_UI.kompas) + 'Prowadź mnie</a></div>';
+  }
+
+  /* ═══════════════ widok: wydarzenie ═══════════════ */
+
+  function listaWydarzen(lista, bezMiejsca) {
+    var poprzedniDzien = null, html = '';
+    lista.forEach(function (w) {
+      if (!bezMiejsca && w.dzien !== poprzedniDzien) {
+        poprzedniDzien = w.dzien;
+        var d = DNI[w.dzien];
+        html += '<div class="dzien-naglowek">' + bezpiecznie(d.nazwa) + ' ' + d.data.split('-').reverse().join('.') + '</div>';
+      }
+      var kat = KATEGORIE[w.kategoria] || {};
+      // Wydarzenia spoza głównego nurtu dostają plakietkę, żeby nikt nie wziął
+      // SUPERfestynu za punkt programu Święta.
+      var znak = nurtObcy(w) && NURTY[nurtem(w)]
+        ? '<span class="nurt">' + bezpiecznie(NURTY[nurtem(w)].nazwa) + '</span> ' : '';
+      html += '<button type="button" class="wydarzenie" data-wydarzenie="' + bezpiecznie(w.id) + '">' +
+        '<span class="godz">' + bezpiecznie(godziny(w)) + '</span>' +
+        '<span class="kropka" style="--kolor:' + bezpiecznie(kat.kolor || '#888') + '"></span>' +
+        '<span class="tyt">' + znak + bezpiecznie(w.tytul) + '</span>' +
+        (bezMiejsca ? '' : '<span class="msc">' + bezpiecznie(w.miejsce) + '</span>') +
+        '</button>';
+    });
+    return html;
+  }
+
+  function podepnijListe() {
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-wydarzenie]'), function (b) {
+      b.addEventListener('click', function () {
+        var wrocDo = stan.widok, arg = stan.widokArg;
+        pokazWydarzenie(b.getAttribute('data-wydarzenie'), function () { wrocNa(wrocDo, arg); });
+      });
+    });
+  }
+
+  function wrocNa(widok, arg) {
+    if (widok === 'lokalizacja') pokazLokalizacje(arg);
+    else if (widok === 'plan') pokazPlan();
+    else pokazProgram();
+  }
+
+  /* Czy całe święto stoi pod jednym adresem. Jeśli tak, powtarzanie go przy
+     każdym z 32 stoisk niczego nie mówi — adres należy wtedy do nagłówka,
+     nie do karty. Na Bydgoskim adresy były różne i zostają na kartach. */
+  var ADRES_SWIETA = (function () {
+    var licz = {}, najlepszy = null, ile = 0, wszystkich = 0;
+    DANE.lokalizacje.forEach(function (l) {
+      if (!l.adres) return;
+      wszystkich++;
+      licz[l.adres] = (licz[l.adres] || 0) + 1;
+      if (licz[l.adres] > ile) { ile = licz[l.adres]; najlepszy = l.adres; }
+    });
+    // Adres wspólny dla większości punktów jest adresem święta, nie punktu.
+    return (wszystkich && ile >= wszystkich * 0.66) ? najlepszy : null;
+  })();
+
+  /** Linijka „gdzie” pod tytułem: numer stoiska, nazwa miejsca, adres — bez powtórek. */
+  function gdzieOpis(w, l) {
+    var czesci = [];
+    if (l && l.numer != null) czesci.push('Stoisko ' + l.numer);
+    /* Nazwa miejsca bywa dłuższą wersją tytułu — pełna nazwa z arkusza kontra
+       skrót w nagłówku panelu. Powtarzanie jej pod tytułem to szum. */
+    var m = w.miejsce || '';
+    var t = w.tytul || '';
+    var powtorka = m && t && (m.indexOf(t) === 0 || t.indexOf(m) === 0);
+    if (m && !powtorka) czesci.push(m);
+    if (l && l.adres && l.adres !== ADRES_SWIETA && m.indexOf(l.adres) === -1) czesci.push(l.adres);
+    return czesci.join(' · ') || (l ? l.nazwa : '');
+  }
+
+  function pokazWydarzenie(id, naWstecz) {
+    var w = DANE.wydarzenia.filter(function (x) { return x.id === id; })[0];
+    if (!w) return;
+    var l = LOKALIZACJE[w.lokalizacja], d = DNI[w.dzien], kat = KATEGORIE[w.kategoria] || {};
+    stan.widok = 'wydarzenie'; stan.widokArg = id;
+
+    var html = '<div class="meta">' +
+      '<span><b>' + bezpiecznie(d.nazwa) + '</b> ' + d.data.split('-').reverse().join('.') + '</span>' +
+      '<span><b>' + bezpiecznie(godziny(w)) + '</b></span></div>' +
+      '<div class="meta"><span>' + bezpiecznie(gdzieOpis(w, l)) + '</span></div>';
+
+    /* Ostrzeżenie o przybliżonym pinie musi stać przy wydarzeniu, a nie tylko
+       w widoku lokalizacji — punkt z jednym wydarzeniem otwiera się od razu tutaj. */
+    if (l && l.przyblizone) {
+      html += '<p class="brak-opisu">Pin jest przybliżony — organizatorzy nie podali dokładnego miejsca. ' +
+        'Szukaj w okolicy wskazanego punktu.</p>';
+    }
+
+    html += '<div class="znaczki">';
+    if (nurtObcy(w) && NURTY[nurtem(w)]) {
+      html += '<span class="znaczek nurt-znaczek">' + bezpiecznie(NURTY[nurtem(w)].nazwa) + '</span>';
+    }
+    html += '<span class="znaczek kat" style="--kolor:' + bezpiecznie(kat.kolor || '#888') + '">' +
+      bezpiecznie(kat.nazwa || w.kategoria) + '</span>';
+    w.tagi.forEach(function (t) {
+      if (TAGI[t]) html += '<span class="znaczek">' + bezpiecznie(TAGI[t].nazwa) + '</span>';
+    });
+    html += '</div>';
+
+    /* Wydarzenia SUPERfestynu nie mają własnych opisów, ale mają wspólny opis
+       nurtu — lepiej pokazać go raz porządnie niż powtarzać przy 28 pozycjach. */
+    var opisNurtu = nurtObcy(w) && NURTY[nurtem(w)] ? NURTY[nurtem(w)].opis : null;
+    if (w.opis) html += '<div class="opis">' + bezpiecznie(w.opis) + '</div>';
+    else if (opisNurtu) html += '<div class="opis o-nurcie">' + bezpiecznie(opisNurtu) + '</div>';
+    else html += '<p class="brak-opisu">Organizatorzy nie podali jeszcze opisu tego wydarzenia. Godzina i miejsce są pewne.</p>';
+
+    if (w.zdjecia && w.zdjecia.length) {
+      html += '<div class="zdjecia">';
+      w.zdjecia.forEach(function (n) {
+        html += '<button type="button" data-zdjecie="' + bezpiecznie(n) + '">' +
+          '<img src="img/' + bezpiecznie(n) + '-mini.jpg" alt="Zdjęcie z wydarzenia: ' + bezpiecznie(w.tytul) + '" loading="lazy" decoding="async"></button>';
+      });
+      html += '</div>';
+    }
+
+    if (w.linki && w.linki.length) {
+      html += '<div class="linki">';
+      w.linki.forEach(function (a) {
+        html += '<a href="' + bezpiecznie(a.url) + '" target="_blank" rel="noopener">' + bezpiecznie(a.etykieta) + ' ↗</a>';
+      });
+      html += '</div>';
+    }
+
+    /* MIEJSCE NA PUNKT 5 z promptu — mechanika angażująca.
+       Dane niosą już `w.dodatki`; kiedy poznamy zakres, treść wchodzi tutaj,
+       między linki a przyciski. Świadomie nie projektuję pod nieznane funkcje. */
+
+    if (PLANER) {
+      html += '<div class="dzialania">' +
+        '<button type="button" class="przycisk pusty" id="do-planu" aria-pressed="' + (wPlanie(w.id) ? 'true' : 'false') + '">' +
+          ikona(IKONY_UI.plan) + '<span>' + (wPlanie(w.id) ? 'W moim planie' : 'Dodaj do planu') + '</span></button>' +
+        '</div>';
+    }
+    html += przyciskNawigacji(l);
+
+    otworzArkusz(w.tytul, html, naWstecz);
+
+    var przycisk = $('do-planu');
+    przycisk.addEventListener('click', function () {
+      if (wPlanie(w.id)) delete stan.plan[w.id]; else stan.plan[w.id] = true;
+      zapiszPlan();
+      przycisk.setAttribute('aria-pressed', wPlanie(w.id) ? 'true' : 'false');
+      przycisk.querySelector('span').textContent = wPlanie(w.id) ? 'W moim planie' : 'Dodaj do planu';
+      odswiezPiny(); odswiezTrase(); odswiezPasek();
+    });
+
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-zdjecie]'), function (b) {
+      b.addEventListener('click', function () {
+        otworzLupe(b.getAttribute('data-zdjecie'), w.tytul, w.zdjecia);
+      });
+    });
+    podepnijNawigacje();
+
+    if (l && l.gps) { var p = zGps(l.gps.lat, l.gps.lng); pokazPunkt(p[0], p[1], 3); }
+  }
+
+  function podepnijNawigacje() { /* zwykłe linki — nic do podpinania, zostawione dla czytelności */ }
+
+  /* ═══════════════ widok: program ═══════════════ */
+
+  function pokazProgram() {
+    stan.widok = 'program'; stan.widokArg = null;
+    var lista = posortowane(DANE.wydarzenia.filter(pasuje));
+    var html = lista.length
+      ? listaWydarzen(lista, false)
+      : '<p class="pusto">Żadne wydarzenie nie pasuje do wybranych filtrów.<br>Spróbuj odznaczyć któryś.</p>';
+    // Kredyt organizatora — z danych, nie z kodu. Miejsce na mapie zajmuje
+    // atrybucja podkładu, wymagana licencją, więc ten idzie tutaj.
+    if (DANE.swieto.stopka) {
+      html += '<p class="pusto" style="border-top:1px solid var(--kreska);margin-top:1rem;font-size:.78rem">' +
+        bezpiecznie(DANE.swieto.stopka) + '</p>';
+    }
+    otworzArkusz('Program — ' + lista.length + zOdmiana(lista.length, ' wydarzenie', ' wydarzenia', ' wydarzeń'), html);
+    podepnijListe();
+  }
+
+  function zOdmiana(n, jeden, kilka, wiele) {
+    if (n === 1) return jeden;
+    var r10 = n % 10, r100 = n % 100;
+    if (r10 >= 2 && r10 <= 4 && (r100 < 12 || r100 > 14)) return kilka;
+    return wiele;
+  }
+
+  /* ═══════════════ widok: plan ═══════════════ */
+
+  function pokazPlan() {
+    stan.widok = 'plan'; stan.widokArg = null;
+    var wybrane = posortowane(DANE.wydarzenia.filter(function (w) { return wPlanie(w.id); }));
+
+    if (!wybrane.length) {
+      otworzArkusz('Mój plan',
+        '<p class="pusto">Nie masz jeszcze nic w planie.<br>' +
+        'Otwórz wydarzenie i naciśnij „Dodaj do planu”, a ułożę je po godzinach ' +
+        'i policzę, ile zajmie przejście między nimi.</p>' +
+        '<div class="dzialania"><button type="button" class="przycisk" id="do-kreatora">' +
+        ikona(IKONY_UI.plan) + 'Zaplanuj za mnie</button></div>' +
+        '<p class="przypis" style="text-align:center">Powiesz, którego dnia masz czas i czego szukasz — ' +
+        'ułożę propozycję, która mieści się w Twoim oknie razem z przejściami.</p>');
+      $('do-kreatora').addEventListener('click', pokazKreator);
+      return;
+    }
+
+    var html = '', poprzedni = null, ostrzezen = 0;
+    wybrane.forEach(function (w) {
+      var l = LOKALIZACJE[w.lokalizacja];
+      var d = DNI[w.dzien];
+
+      if (!poprzedni || poprzedni.dzien !== w.dzien) {
+        html += '<div class="dzien-naglowek">' + bezpiecznie(d.nazwa) + ' ' + d.data.split('-').reverse().join('.') + '</div>';
+      } else {
+        var lp = LOKALIZACJE[poprzedni.lokalizacja];
+        if (lp && l && lp.id !== l.id && lp.gps && l.gps) {
+          var p = przejscie(lp.gps, l.gps);
+          // Ile realnie zostaje: od końca poprzedniego (albo jego startu,
+          // gdy program nie podaje końca) do startu następnego.
+          /* Dwa różne kłopoty, które łatwo pomylić:
+             — wydarzenie trwa długo i po prostu trzeba z niego wyjść wcześniej
+               (to normalne przy imprezach, na które się „wpada"),
+             — nie da się zdążyć, nawet wychodząc od razu (to dopiero alarm).
+             Mierzenie tylko od godziny zakończenia dawałoby czerwone
+             ostrzeżenie przy każdym całodniowym punkcie programu. */
+          var startPoprzedniego = naMinuty(poprzedni.od);
+          var koniecPoprzedniego = naMinuty(poprzedni.do || poprzedni.od);
+          var start = naMinuty(w.od);
+          var koniecNastepnego = w.do ? naMinuty(w.do) : start;
+          var przybycieNajwczesniej = startPoprzedniego + p.minuty;   // gdybyś wyszedł od razu
+          var najpozniejWyjsc = start - p.minuty;                     // żeby zdążyć na początek
+
+          var zaciasno = przybycieNajwczesniej > koniecNastepnego;    // nie da się w ogóle
+          var spoznisz = !zaciasno && przybycieNajwczesniej > start;  // złapiesz, ale nie od początku
+          var trzebaWczesniej = !zaciasno && !spoznisz && najpozniejWyjsc < koniecPoprzedniego;
+          if (zaciasno) ostrzezen++;
+
+          var powod = '';
+          if (zaciasno) {
+            powod = ' — nie zdążysz; wydarzenie kończy się o ' + zMinut(koniecNastepnego) +
+              ', a najwcześniej byłbyś o ' + zMinut(przybycieNajwczesniej);
+          } else if (spoznisz) {
+            powod = ' — na początek nie zdążysz, najwcześniej o ' + zMinut(przybycieNajwczesniej) +
+              (w.do ? ' (trwa do ' + w.do + ')' : '');
+          } else if (trzebaWczesniej) {
+            powod = ' — wyjdź najpóźniej o ' + zMinut(najpozniejWyjsc) +
+              (poprzedni.do ? ', przed końcem poprzedniego wydarzenia' : '');
+          }
+          if (!poprzedni.do && powod) {
+            powod += '. Program nie podaje, kiedy kończy się poprzednie wydarzenie';
+          }
+          html += '<div class="przejscie' + (zaciasno ? ' zaciasno' : '') + '">' + ikona(IKONY_UI.nogi) +
+            '<span>' + p.minuty + ' min pieszo (' +
+            (p.metry >= 1000 ? (p.metry / 1000).toFixed(1) + ' km' : p.metry + ' m') + ')' + powod +
+            '</span></div>';
+        } else if (lp && l && lp.id === l.id) {
+          html += '<div class="przejscie"><span>To samo miejsce — nigdzie nie idziesz.</span></div>';
+        }
+      }
+
+      html += '<div class="plan-poz">' +
+        '<span class="godz">' + bezpiecznie(godziny(w)) + '</span>' +
+        '<span class="tyt">' + bezpiecznie(w.tytul) + '</span>' +
+        '<span class="msc">' + bezpiecznie(w.miejsce) + '</span>' +
+        '<button type="button" class="usun" data-usun="' + bezpiecznie(w.id) + '">Usuń z planu</button>' +
+        '</div>';
+      poprzedni = w;
+    });
+
+    if (ostrzezen) {
+      html = '<p class="brak-opisu" style="border-left-color:var(--ostrzezenie)">' +
+        'W ' + ostrzezen + zOdmiana(ostrzezen, ' miejscu' , ' miejscach', ' miejscach') +
+        ' nie zdążysz między wydarzeniami, nawet wychodząc od razu. Zaznaczone na czerwono.</p>' + html;
+    }
+
+    html += '<div class="dzialania"><button type="button" class="przycisk pusty" id="do-kreatora">' +
+      ikona(IKONY_UI.plan) + 'Ułóż plan od nowa</button></div>';
+
+    otworzArkusz('Mój plan — ' + wybrane.length + zOdmiana(wybrane.length, ' pozycja', ' pozycje', ' pozycji'), html);
+
+    $('do-kreatora').addEventListener('click', pokazKreator);
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-usun]'), function (b) {
+      b.addEventListener('click', function () {
+        delete stan.plan[b.getAttribute('data-usun')];
+        zapiszPlan(); odswiezPiny(); odswiezTrase(); pokazPlan();
+      });
+    });
+  }
+
+  /* ═══════════════ widok: zaplanuj święto ═══════════════ */
+
+  /* Kreator układa propozycję, nie wyrocznię: dobiera wydarzenia, które
+     mieszczą się w oknie godzinowym RAZEM z czasem przejścia między nimi.
+     Wynik trafia do „Mojego planu" dopiero po zatwierdzeniu i dalej daje
+     się edytować ręcznie. */
+
+  var kreator = null;   // zapamiętane ustawienia, żeby powrót nie kasował formularza
+
+  function domyslneKreatora() {
+    var dzien = stan.dzien !== 'wszystkie' ? stan.dzien : DANE.swieto.dni[0].id;
+    return { dzien: dzien, od: null, do: null, tagi: {}, kategorie: {}, pobyt: 45 };
+  }
+
+  /** Widełki godzin całego dnia — stąd biorą się wartości początkowe. */
+  function zakresDnia(dzien) {
+    var lista = DANE.wydarzenia.filter(function (w) { return w.dzien === dzien; });
+    if (!lista.length) return { od: 600, do: 1200 };
+    var od = Math.min.apply(null, lista.map(function (w) { return naMinuty(w.od); }));
+    var doo = Math.max.apply(null, lista.map(function (w) { return naMinuty(w.do || w.od); }));
+    return { od: od, do: doo };
+  }
+
+  function pokazKreator() {
+    stan.widok = 'kreator'; stan.widokArg = null;
+    if (!kreator) kreator = domyslneKreatora();
+    var zakres = zakresDnia(kreator.dzien);
+    if (kreator.od === null) kreator.od = zakres.od;
+    if (kreator.do === null) kreator.do = zakres.do;
+
+    // Ile wydarzeń tego dnia niesie dany tag/kategorię — pokazujemy wprost,
+    // żeby nikt nie szukał w ciemno tam, gdzie program milczy.
+    var tegoDnia = DANE.wydarzenia.filter(function (w) { return w.dzien === kreator.dzien; });
+    function ile(pred) { return tegoDnia.filter(pred).length; }
+
+    var html = '<div class="pole"><h3>Dzień</h3><div class="filtry">';
+    DANE.swieto.dni.forEach(function (d) {
+      html += '<button type="button" class="filtr" data-kdzien="' + bezpiecznie(d.id) + '" aria-pressed="' +
+        (kreator.dzien === d.id ? 'true' : 'false') + '">' + bezpiecznie(d.nazwa) + ' ' +
+        (+d.data.split('-')[2]) + '.' + d.data.split('-')[1] + '</button>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="pole"><h3>Mam czas</h3><div class="godziny">' +
+      '<input type="time" id="k-od" value="' + zMinut2(kreator.od) + '" aria-label="Od godziny">' +
+      '<span>–</span>' +
+      '<input type="time" id="k-do" value="' + zMinut2(kreator.do) + '" aria-label="Do godziny">' +
+      '</div></div>';
+
+    html += '<div class="pole"><h3>Szukam czegoś</h3><div class="filtry">';
+    DANE.kategorie.forEach(function (kt) {
+      var n = ile(function (w) { return w.kategoria === kt.id; });
+      html += '<button type="button" class="filtr" data-kkat="' + bezpiecznie(kt.id) + '" style="--kolor:' +
+        bezpiecznie(kt.kolor) + '" aria-pressed="' + (kreator.kategorie[kt.id] ? 'true' : 'false') + '"' +
+        (n ? '' : ' disabled') + '><span class="plamka"></span>' + bezpiecznie(kt.nazwa) +
+        ' <span class="licznik-opcji">' + n + '</span></button>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="pole"><h3>Warunki</h3><div class="filtry">';
+    DANE.tagi.forEach(function (t) {
+      var n = ile(function (w) { return w.tagi.indexOf(t.id) !== -1; });
+      html += '<button type="button" class="filtr" data-ktag="' + bezpiecznie(t.id) + '" aria-pressed="' +
+        (kreator.tagi[t.id] ? 'true' : 'false') + '"' + (n ? '' : ' disabled') +
+        (t.opis ? ' title="' + bezpiecznie(t.opis) + '"' : '') + '>' + bezpiecznie(t.nazwa) +
+        ' <span class="licznik-opcji">' + n + '</span></button>';
+    });
+    html += '</div><p class="przypis">Liczby mówią, ile wydarzeń tego dnia ma dany znacznik. ' +
+      'Tam, gdzie program milczy, znacznika nie ma — to nie znaczy, że wydarzenie nie pasuje.</p></div>';
+
+    html += '<div class="pole"><h3>Ile chcę zostać w jednym miejscu</h3><div class="pobyt">' +
+      '<input type="number" id="k-pobyt" min="10" max="180" step="5" value="' + kreator.pobyt + '" aria-label="Minut w jednym miejscu">' +
+      '<span>minut</span></div>' +
+      '<p class="przypis">To Twoje założenie, nie dane organizatorów. Dziesięć wydarzeń nie ma podanej ' +
+      'godziny zakończenia — dla nich liczymy tyle właśnie minut.</p></div>';
+
+    html += '<div class="dzialania"><button type="button" class="przycisk" id="k-uloz">Ułóż propozycję</button></div>';
+
+    otworzArkusz('Zaplanuj święto', html, function () { pokazPlan(); });
+
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-kdzien]'), function (b) {
+      b.addEventListener('click', function () {
+        kreator.dzien = b.getAttribute('data-kdzien');
+        var z = zakresDnia(kreator.dzien);
+        kreator.od = z.od; kreator.do = z.do;      // nowy dzień, nowe widełki
+        pokazKreator();
+      });
+    });
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-kkat],[data-ktag]'), function (b) {
+      b.addEventListener('click', function () {
+        var kat = b.getAttribute('data-kkat'), tag = b.getAttribute('data-ktag');
+        var zbior = kat ? kreator.kategorie : kreator.tagi, klucz = kat || tag;
+        if (zbior[klucz]) delete zbior[klucz]; else zbior[klucz] = true;
+        b.setAttribute('aria-pressed', zbior[klucz] ? 'true' : 'false');
+      });
+    });
+    $('k-uloz').addEventListener('click', function () {
+      var podaneOd = naMinuty($('k-od').value), podaneDo = naMinuty($('k-do').value);
+      if (podaneOd !== null) kreator.od = podaneOd;
+      if (podaneDo !== null && podaneDo > kreator.od) kreator.do = podaneDo;
+      kreator.pobyt = Math.max(10, Math.min(180, +$('k-pobyt').value || 45));
+      pokazPropozycje();
+    });
+  }
+
+  function zMinut2(m) {
+    var g = Math.floor(m / 60), n = m % 60;
+    return (g < 10 ? '0' : '') + g + ':' + (n < 10 ? '0' : '') + n;
+  }
+
+  /** Dobiera wydarzenia mieszczące się w oknie razem z czasem przejścia. */
+  function ulozPropozycje(o) {
+    var kandydaci = DANE.wydarzenia.filter(function (w) {
+      if (w.dzien !== o.dzien) return false;
+      var wybraneKat = Object.keys(o.kategorie);
+      if (wybraneKat.length && wybraneKat.indexOf(w.kategoria) === -1) return false;
+      var wybraneTagi = Object.keys(o.tagi);
+      for (var i = 0; i < wybraneTagi.length; i++) if (w.tagi.indexOf(wybraneTagi[i]) === -1) return false;
+      var start = naMinuty(w.od);
+      var koniec = w.do ? naMinuty(w.do) : start + o.pobyt;
+      return koniec > o.od && start < o.do;                 // zahacza o okno
+    }).sort(function (a, b) { return naMinuty(a.od) - naMinuty(b.od); });
+
+    var wybrane = [], czas = o.od, gdzie = null, skadId = null;
+    kandydaci.forEach(function (w) {
+      var l = LOKALIZACJE[w.lokalizacja];
+      if (!l || !l.gps) return;
+      // Kolejne wydarzenie w tym samym miejscu nie wymaga marszu.
+      var dojscie = (gdzie && skadId !== l.id) ? przejscie(gdzie, l.gps).minuty : 0;
+      var start = Math.max(czas + dojscie, naMinuty(w.od));
+      var koniecW = w.do ? naMinuty(w.do) : naMinuty(w.od) + o.pobyt;
+      var koniec = Math.min(koniecW, o.do);
+      // Chcemy `pobyt` minut, ale wydarzenie krótsze wystarczy w całości.
+      var potrzeba = Math.min(o.pobyt, koniecW - naMinuty(w.od));
+      if (koniec - start < potrzeba) return;
+      // Zostajemy tyle, ile chcieliśmy — nie tyle, ile wydarzenie trwa.
+      var zostaje = Math.min(o.pobyt, koniec - start);
+      wybrane.push({ w: w, start: start, pobyt: zostaje, dojscie: dojscie });
+      czas = start + zostaje;
+      gdzie = l.gps; skadId = l.id;
+    });
+    return { wybrane: wybrane, kandydatow: kandydaci.length };
+  }
+
+  function pokazPropozycje() {
+    stan.widok = 'propozycja'; stan.widokArg = null;
+    var wynik = ulozPropozycje(kreator);
+    var d = DNI[kreator.dzien];
+
+    if (!wynik.wybrane.length) {
+      otworzArkusz('Propozycja planu',
+        '<p class="pusto">W oknie ' + zMinut2(kreator.od) + '–' + zMinut2(kreator.do) + ' nic się nie mieści.<br>' +
+        (wynik.kandydatow
+          ? 'Pasujących wydarzeń jest ' + wynik.kandydatow + ', ale nie da się do nich zdążyć pieszo. Spróbuj poszerzyć okno albo skrócić czas pobytu.'
+          : 'Żadne wydarzenie tego dnia nie ma wybranych znaczników. Spróbuj odznaczyć któryś.') + '</p>',
+        function () { pokazKreator(); });
+      return;
+    }
+
+    var html = '<p class="przypis" style="margin-bottom:.8rem">' + bezpiecznie(d.nazwa) + ', ' +
+      zMinut2(kreator.od) + '–' + zMinut2(kreator.do) + '. Zmieściło się ' + wynik.wybrane.length +
+      ' z ' + wynik.kandydatow + zOdmiana(wynik.kandydatow, ' pasującego wydarzenia', ' pasujących wydarzeń', ' pasujących wydarzeń') +
+      '. To propozycja — po wpisaniu do planu możesz ją dowolnie zmieniać.</p>';
+
+    wynik.wybrane.forEach(function (poz, i) {
+      if (i > 0 && poz.dojscie > 0) {
+        html += '<div class="przejscie">' + ikona(IKONY_UI.nogi) + '<span>' + poz.dojscie + ' min pieszo</span></div>';
+      }
+      html += '<div class="propozycja">' +
+        '<span class="godz">' + zMinut2(poz.start) + '</span>' +
+        '<span class="tyt">' + bezpiecznie(poz.w.tytul) + '</span>' +
+        '<span class="msc">' + bezpiecznie(poz.w.miejsce) + ' · zostajesz ' + poz.pobyt + ' min</span>' +
+        '</div>';
+    });
+
+    html += '<div class="dzialania">' +
+      '<button type="button" class="przycisk" id="k-wpisz">Wpisz do mojego planu</button>' +
+      '<button type="button" class="przycisk pusty" id="k-wroc">Zmień ustawienia</button></div>';
+
+    otworzArkusz('Propozycja planu', html, function () { pokazKreator(); });
+
+    $('k-wroc').addEventListener('click', pokazKreator);
+    $('k-wpisz').addEventListener('click', function () {
+      // Podmieniamy tylko ten dzień — ręczne wybory z drugiego dnia zostają.
+      DANE.wydarzenia.forEach(function (w) { if (w.dzien === kreator.dzien) delete stan.plan[w.id]; });
+      wynik.wybrane.forEach(function (poz) { stan.plan[poz.w.id] = true; });
+      zapiszPlan();
+      stan.dzien = kreator.dzien;
+      Array.prototype.forEach.call($('dni').children, function (x, i) {
+        x.setAttribute('aria-pressed', DANE.swieto.dni[i] && DANE.swieto.dni[i].id === kreator.dzien ? 'true' : 'false');
+      });
+      poFiltrach();
+      pokazPlan();
+    });
+  }
+
+  /* ═══════════════ widok: filtry ═══════════════ */
+
+  function pokazFiltry() {
+    stan.widok = 'filtry'; stan.widokArg = null;
+    var html = '';
+
+    // Filtr nurtu tylko wtedy, gdy jest z czego wybierać.
+    if ((DANE.nurty || []).length > 1) {
+      html += '<div class="grupa-filtrow"><h3>Które święto</h3><div class="filtry">';
+      DANE.nurty.forEach(function (n) {
+        html += '<button type="button" class="filtr" data-nurt="' + bezpiecznie(n.id) + '" ' +
+          'aria-pressed="' + (stan.nurty[n.id] ? 'true' : 'false') + '">' + bezpiecznie(n.nazwa) + '</button>';
+      });
+      html += '</div></div>';
+    }
+
+    html += '<div class="grupa-filtrow"><h3>Kategoria</h3><div class="filtry">';
+    DANE.kategorie.forEach(function (kt) {
+      html += '<button type="button" class="filtr" data-kat="' + bezpiecznie(kt.id) + '" style="--kolor:' + bezpiecznie(kt.kolor) + '" ' +
+        'aria-pressed="' + (stan.kategorie[kt.id] ? 'true' : 'false') + '">' +
+        '<span class="plamka"></span>' + bezpiecznie(kt.nazwa) + '</button>';
+    });
+    html += '</div></div>';
+
+    if (DANE.tagi && DANE.tagi.length) {
+      html += '<div class="grupa-filtrow"><h3>Tagi — łączone przez „oraz”</h3><div class="filtry">';
+      DANE.tagi.forEach(function (t) {
+        html += '<button type="button" class="filtr" data-tag="' + bezpiecznie(t.id) + '" ' +
+          'aria-pressed="' + (stan.tagi[t.id] ? 'true' : 'false') + '"' +
+          (t.opis ? ' title="' + bezpiecznie(t.opis) + '"' : '') + '>' + bezpiecznie(t.nazwa) + '</button>';
+      });
+      html += '</div></div>';
+      html += '<p class="pusto" style="padding:.3rem 0;text-align:left">Brak tagu przy wydarzeniu znaczy „nie wiemy”, nie „nie dotyczy”.</p>';
+    }
+
+    html += '<div class="dzialania"><button type="button" class="przycisk pusty" id="wyczysc">Wyczyść filtry</button></div>';
+    otworzArkusz('Filtry', html);
+
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-kat],[data-tag],[data-nurt]'), function (b) {
+      b.addEventListener('click', function () {
+        var kat = b.getAttribute('data-kat'), tag = b.getAttribute('data-tag'), nurt = b.getAttribute('data-nurt');
+        var zbior = kat ? stan.kategorie : (tag ? stan.tagi : stan.nurty), klucz = kat || tag || nurt;
+        if (zbior[klucz]) delete zbior[klucz]; else zbior[klucz] = true;
+        b.setAttribute('aria-pressed', zbior[klucz] ? 'true' : 'false');
+        poFiltrach();
+      });
+    });
+    $('wyczysc').addEventListener('click', function () {
+      stan.kategorie = {}; stan.tagi = {}; stan.nurty = {};
+      poFiltrach(); pokazFiltry();
+    });
+  }
+
+  function poFiltrach() { odswiezPiny(); odswiezTrase(); odswiezPasek(); rysuj(); }
+
+  /* ═══════════════ widok: przyjaciele święta ═══════════════
+
+     Osobno od programu, bo to nie są wydarzenia. Znaczniki na mapie
+     pojawiają się tylko przy otwartej sekcji i wyglądają inaczej niż piny,
+     żeby nikt nie wziął ich za punkt programu. */
+
+  function pokazPrzyjaciol() {
+    stan.widok = 'przyjaciele'; stan.widokArg = null;
+    var p = DANE.przyjaciele || {};
+    var lista = p.lista || [];
+
+    var html = p.wstep ? '<p class="pusto" style="text-align:left;padding:0 0 .7rem">' + bezpiecznie(p.wstep) + '</p>' : '';
+
+    html += lista.length ? lista.map(function (x, i) {
+      var wiersze = '';
+      if (x.adres) wiersze += '<p class="msc">' + bezpiecznie(x.adres) + '</p>';
+      if (x.pomoc) wiersze += '<p class="pomoc">' + bezpiecznie(x.pomoc) + '</p>';
+      if (x.otwarte) wiersze += '<p class="pomoc">' + bezpiecznie(x.otwarte) + '</p>';
+      if (x.url) wiersze += '<p><a href="' + bezpiecznie(x.url) + '" target="_blank" rel="noopener">strona ↗</a></p>';
+      return '<div class="przyjaciel">' +
+        '<span class="znaczek-serca" aria-hidden="true">' + ikona(IKONY_UI.serce) + '</span>' +
+        '<div><h3>' + bezpiecznie(x.nazwa) + '</h3>' + wiersze + '</div>' +
+        (x.gps ? '<button type="button" class="pokaz-na-mapie" data-przyjaciel="' + i + '">Pokaż</button>' : '') +
+        '</div>';
+    }).join('') : '<p class="pusto">Lista jeszcze pusta.</p>';
+
+    otworzArkusz('Przyjaciele Święta', html);
+    znacznikiPrzyjaciol(true);
+
+    Array.prototype.forEach.call(tresc.querySelectorAll('[data-przyjaciel]'), function (b) {
+      b.addEventListener('click', function () {
+        var x = lista[+b.getAttribute('data-przyjaciel')];
+        if (!x || !x.gps) return;
+        var poz = zGps(x.gps.lat, x.gps.lng);
+        pokazPunkt(poz[0], poz[1], 3.5);
+      });
+    });
+  }
+
+  /* ═══════════════ widok: o nas ═══════════════ */
+
+  function pokazONas() {
+    stan.widok = 'onas'; stan.widokArg = null;
+    var o = DANE.onas || {};
+    var html = '';
+
+    if (o.logo) html += '<img id="onas-logo" src="' + bezpiecznie(o.logo) + '" alt="Logo " loading="lazy">';
+    if (o.tresc) html += '<div class="opis">' + bezpiecznie(o.tresc) + '</div>';
+
+    var k = o.kontakt;
+    if (k && k.email) {
+      if (k.wstep) html += '<p class="pomoc" style="margin-top:1rem">' + bezpiecznie(k.wstep) + '</p>';
+      var adres = 'mailto:' + encodeURIComponent(k.email).replace(/%40/, '@') +
+        (k.temat ? '?subject=' + encodeURIComponent(k.temat) : '');
+      html += '<div class="dzialania">' +
+        '<a class="przycisk" href="' + bezpiecznie(adres) + '">' + ikona(IKONY_UI.koperta) +
+        bezpiecznie(k.etykieta || 'Napisz do nas') + '</a>' +
+        (o.formularz ? '<a class="przycisk pusty" href="' + bezpiecznie(o.formularz) +
+          '" target="_blank" rel="noopener">Formularz ↗</a>' : '') +
+        '</div>';
+      html += '<p class="msc" style="text-align:center">' + bezpiecznie(k.email) + '</p>';
+    }
+
+    otworzArkusz(o.naglowek || 'O nas', html);
+  }
+
+  /* Znaczniki przyjaciół — osobna warstwa, mniejsze i obrysowane,
+     widoczne tylko przy otwartej sekcji. */
+  var znacznikiP = [];
+  function zbudujZnaczniki() {
+    var lista = (DANE.przyjaciele && DANE.przyjaciele.lista) || [];
+    var wezel = $('piny');
+    lista.forEach(function (x, i) {
+      if (!x.gps) return;
+      var poz = zGps(x.gps.lat, x.gps.lng);
+      /* Klikalne, nie ozdobne: znacznik, który ignoruje dotknięcie, drażni
+         bardziej niż pomaga. Prowadzi do swojego wpisu na otwartej liście. */
+      var e = document.createElement('button');
+      e.type = 'button';
+      e.className = 'znacznik-przyjaciela';
+      e.title = x.nazwa;
+      e.setAttribute('aria-label', 'Przyjaciel Święta: ' + x.nazwa);
+      e.innerHTML = ikona(IKONY_UI.serce);
+      e.hidden = true;
+      e.addEventListener('click', function () { wskazPrzyjaciela(i); });
+      wezel.appendChild(e);
+      znacznikiP.push({ wezel: e, dane: x, indeks: i, x: poz[0], y: poz[1] });
+    });
+  }
+
+  function przeliczZnaczniki() {
+    znacznikiP.forEach(function (z) {
+      var poz = zGps(z.dane.gps.lat, z.dane.gps.lng);
+      z.x = poz[0]; z.y = poz[1];
+    });
+  }
+
+  function znacznikiPrzyjaciol(widoczne) {
+    znacznikiP.forEach(function (z) { z.wezel.hidden = !widoczne; });
+    if (widoczne) rysuj();
+  }
+
+  /** Z mapy do wpisu na liście — przewija i na chwilę podświetla. */
+  function wskazPrzyjaciela(indeks) {
+    var wpisy = tresc.querySelectorAll('.przyjaciel');
+    var cel = wpisy[indeks];
+    if (!cel) return;
+    Array.prototype.forEach.call(wpisy, function (w) { w.classList.remove('wskazany'); });
+    cel.classList.add('wskazany');
+    cel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    setTimeout(function () { cel.classList.remove('wskazany'); }, 2200);
+  }
+
+  /* ═══════════════ podgląd zdjęcia ═══════════════ */
+
+  /* Galeria: raz otwarte zdjęcie przewija się w obrębie wydarzenia —
+     strzałkami, klawiszami i przesunięciem palca — bez wracania do panelu. */
+  var lupa = $('lupa'), galeria = [], wGalerii = 0, podpisGalerii = '';
+
+  function pokazZdjecie(i) {
+    if (!galeria.length) return;
+    wGalerii = (i + galeria.length) % galeria.length;      // zawija się w kółko
+    $('lupa-obraz').src = 'img/' + galeria[wGalerii] + '.jpg';
+    $('lupa-obraz').alt = 'Zdjęcie ' + (wGalerii + 1) + ' z ' + galeria.length + ': ' + podpisGalerii;
+    $('lupa-podpis').innerHTML = bezpiecznie(podpisGalerii) +
+      (galeria.length > 1 ? '<br><span class="licznik-zdjec">' + (wGalerii + 1) + ' z ' + galeria.length + '</span>' : '');
+    var jedno = galeria.length < 2;
+    $('lupa-wstecz').hidden = jedno;
+    $('lupa-dalej').hidden = jedno;
+  }
+
+  function otworzLupe(nazwa, podpis, wszystkie) {
+    galeria = (wszystkie && wszystkie.length) ? wszystkie.slice() : [nazwa];
+    podpisGalerii = podpis;
+    pokazZdjecie(Math.max(0, galeria.indexOf(nazwa)));
+    lupa.hidden = false;
+    $('zamknij-lupe').focus();
+  }
+
+  function zamknijLupe() { lupa.hidden = true; $('lupa-obraz').src = ''; galeria = []; }
+
+  $('zamknij-lupe').addEventListener('click', zamknijLupe);
+  $('lupa-wstecz').addEventListener('click', function () { pokazZdjecie(wGalerii - 1); });
+  $('lupa-dalej').addEventListener('click', function () { pokazZdjecie(wGalerii + 1); });
+  lupa.addEventListener('click', function (e) { if (e.target === lupa) zamknijLupe(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (lupa.hidden) return;
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); pokazZdjecie(wGalerii - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); pokazZdjecie(wGalerii + 1); }
+  });
+
+  // Przesunięcie palcem — na telefonie naturalniejsze niż celowanie w strzałkę.
+  var dotykX = null;
+  lupa.addEventListener('pointerdown', function (e) { dotykX = e.clientX; });
+  lupa.addEventListener('pointerup', function (e) {
+    if (dotykX === null) return;
+    var przesuw = e.clientX - dotykX;
+    dotykX = null;
+    if (Math.abs(przesuw) > 45) pokazZdjecie(wGalerii + (przesuw < 0 ? 1 : -1));
+  });
+
+  /* ═══════════════ dolny pasek ═══════════════ */
+
+  var SEKCJE = [
+    { id: 'program', nazwa: 'Program',  ikona: IKONY_UI.program, otworz: pokazProgram },
+    PLANER ? { id: 'plan', nazwa: 'Mój plan', ikona: IKONY_UI.plan, otworz: pokazPlan, licznik: ilePlanu } : null,
+    { id: 'filtry',  nazwa: 'Filtry',   ikona: IKONY_UI.filtry,  otworz: pokazFiltry, licznik: function () { return ileWybrano(stan.kategorie) + ileWybrano(stan.tagi) + ileWybrano(stan.nurty); } },
+    { id: 'przyjaciele', nazwa: 'Przyjaciele', ikona: IKONY_UI.serce, otworz: pokazPrzyjaciol },
+    { id: 'onas',        nazwa: 'O nas',       ikona: IKONY_UI.koperta, otworz: pokazONas }
+  ].filter(Boolean);
+
+  (function zbudujPasek() {
+    var pasek = $('pasek');
+    SEKCJE.forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.id = 'sekcja-' + s.id;
+      b.setAttribute('aria-expanded', 'false');
+      b.innerHTML = ikona(s.ikona) + '<span>' + s.nazwa + '</span>';
+      b.addEventListener('click', function () {
+        if (stan.widok === s.id) { zamknijArkusz(); return; }   // drugie naciśnięcie zamyka
+        s.otworz();
+      });
+      pasek.appendChild(b);
+    });
+  })();
+
+  function odswiezPasek() {
+    SEKCJE.forEach(function (s) {
+      var b = $('sekcja-' + s.id);
+      b.setAttribute('aria-expanded', stan.widok === s.id ? 'true' : 'false');
+      var stary = b.querySelector('.licznik');
+      if (stary) stary.remove();
+      var n = s.licznik ? s.licznik() : 0;
+      if (n > 0) {
+        var z = document.createElement('span');
+        z.className = 'licznik'; z.textContent = n;
+        b.appendChild(z);
+      }
+    });
+  }
+
+  /* ═══════════════ pasek promowanego wydarzenia ═══════════════
+
+     Odliczanie do najbliższego nadchodzącego wydarzenia z polem `promocja`.
+     Po jego zakończeniu pasek znika sam, a gdy promowanych jest kilka,
+     przeskakuje na następne. Godziny liczymy w czasie lokalnym urządzenia,
+     bo taki ma człowiek stojący na Bydgoskim. */
+
+  var KLUCZ_PROMO = 'promo-ukryte:' + (DANE.swieto.id || 'swieto');
+
+  function kiedy(w) {
+    var d = DNI[w.dzien];
+    if (!d) return null;
+    return new Date(d.data + 'T' + w.od + ':00');
+  }
+  function kiedyKoniec(w) {
+    var d = DNI[w.dzien];
+    if (!d) return null;
+    // Bez godziny zakończenia dajemy wydarzeniu dwie godziny, żeby pasek
+    // nie zniknął w sekundzie rozpoczęcia koncertu.
+    return w.do ? new Date(d.data + 'T' + w.do + ':00')
+                : new Date(kiedy(w).getTime() + 2 * 3600e3);
+  }
+
+  function odliczanie(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    var dni = Math.floor(s / 86400), godz = Math.floor(s % 86400 / 3600);
+    var min = Math.floor(s % 3600 / 60), sek = s % 60;
+    if (dni > 0)  return 'za ' + dni + zOdmiana(dni, ' dzień', ' dni', ' dni') + ' ' + godz + ' godz.';
+    if (godz > 0) return 'za ' + godz + ' godz. ' + min + ' min';
+    if (min > 0)  return 'za ' + min + ' min ' + sek + ' s';
+    return 'za ' + sek + ' s';
+  }
+
+  (function pasekPromo() {
+    var pasek = $('promo');
+    if (!pasek) return;
+    try { if (localStorage.getItem(KLUCZ_PROMO) === 'tak') return; } catch (e) {}
+
+    var promowane = DANE.wydarzenia.filter(function (w) { return w.promocja && kiedy(w); });
+    if (!promowane.length) return;
+
+    var licznik = null, okresLicznika = 0, biezace = null;
+
+    function wybierz() {
+      var teraz = Date.now();
+      var czynne = promowane.filter(function (w) { return kiedyKoniec(w).getTime() > teraz; })
+        .sort(function (a, b) { return kiedy(a) - kiedy(b); });
+      return czynne[0] || null;
+    }
+
+    function pokaz(w) {
+      var kat = KATEGORIE[w.kategoria] || {};
+      var p = w.promocja;
+      $('promo-znak').style.setProperty('--kolor', kat.kolor || 'var(--akcent)');
+      $('promo-znak').innerHTML = p.ikona
+        ? '<img src="' + bezpiecznie(p.ikona) + '" alt="">'
+        : ikona(IKONY[kat.ikona] || IKONY.punkt);
+      $('promo-haslo').textContent = p.haslo || 'Nie przegap';
+      $('promo-co').textContent = w.tytul.replace(/\s+—\s+koncert$/, '');
+      if (p.url) {
+        $('promo-sluchaj').href = p.url;
+        $('promo-etykieta').textContent = p.etykietaLinku || 'Posłuchaj';
+        $('promo-sluchaj').hidden = false;
+      } else {
+        $('promo-sluchaj').hidden = true;
+      }
+      pasek.hidden = false;
+    }
+
+    function tyknij() {
+      var w = wybierz();
+      if (!w) { pasek.hidden = true; clearInterval(licznik); return; }
+      if (w !== biezace) { biezace = w; pokaz(w); }
+
+      var doStartu = kiedy(w).getTime() - Date.now();
+      var zegar = $('promo-zegar');
+      if (doStartu <= 0) {
+        zegar.textContent = 'trwa teraz — ' + w.miejsce;
+        zegar.classList.add('trwa');
+      } else {
+        var d = DNI[w.dzien];
+        var skrotDnia = d.nazwa.toLowerCase().slice(0, 3) + '.';
+        zegar.textContent = odliczanie(doStartu) + ' · ' + skrotDnia + ' ' + w.od;
+        zegar.classList.remove('trwa');
+      }
+      // Sekundy tykają tylko na finiszu — dalej wystarcza pół minuty.
+      var chcianyOkres = doStartu > 3600e3 ? 30000 : 1000;
+      if (okresLicznika !== chcianyOkres) {
+        clearInterval(licznik);
+        licznik = setInterval(tyknij, chcianyOkres);
+        okresLicznika = chcianyOkres;
+      }
+    }
+
+    $('promo-tresc').addEventListener('click', function () {
+      if (biezace) pokazWydarzenie(biezace.id, function () { zamknijArkusz(); });
+    });
+    $('promo-zwin').addEventListener('click', function () {
+      pasek.hidden = true;
+      clearInterval(licznik);
+      try { localStorage.setItem(KLUCZ_PROMO, 'tak'); } catch (e) {}
+    });
+
+    tyknij();
+  })();
+
+  /* ═══════════════ przełącznik dni ═══════════════ */
+
+  (function zbudujDni() {
+    var pojemnik = $('dni');
+    /* Jednodniowe święto nie ma czego przełączać. Chełmińskie trwa trzy godziny
+       w jedną niedzielę, a pasek i tak pokazywał „Oba dni" — czyli pytanie
+       bez sensu, zajmujące pasmo na górze ekranu. */
+    if (DANE.swieto.dni.length < 2) { pojemnik.hidden = true; return; }
+
+    var opcje = DANE.swieto.dni.map(function (d) {
+      return { id: d.id, etykieta: d.nazwa + ' ' + (+d.data.split('-')[2]) + '.' + d.data.split('-')[1] };
+    });
+    opcje.push({ id: 'wszystkie', etykieta: DANE.swieto.dni.length === 2 ? 'Oba dni' : 'Wszystkie dni' });
+
+    opcje.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = o.etykieta;
+      b.setAttribute('aria-pressed', stan.dzien === o.id ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        stan.dzien = o.id;
+        Array.prototype.forEach.call(pojemnik.children, function (x) {
+          x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+        });
+        poFiltrach();
+        if (stan.widok === 'program') pokazProgram();
+        else if (stan.widok === 'plan') pokazPlan();
+      });
+      pojemnik.appendChild(b);
+    });
+  })();
+
+  /* ═══════════════ licznik odsłon ═══════════════
+
+     Jedyny obcy skrypt na tej stronie i jedyny, bez którego wszystko
+     działa tak samo. Ładuje się wyłącznie na domenie produkcyjnej,
+     odroczony, a jego awaria jest bez znaczenia — nie ma tu żadnego
+     `await` ani niczego, co by na niego czekało. */
+  (function licznik() {
+    var l = DANE.swieto.licznik;
+    if (!l || !l.kod) return;
+    if (location.protocol !== 'https:' || location.hostname !== l.domena) return;
+
+    var s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-goatcounter', l.kod);
+    s.src = 'https://gc.zgo.at/count.js';
+    s.onerror = function () { /* brak licznika nikomu nie szkodzi */ };
+    document.body.appendChild(s);
+
+    if (l.nota) {
+      var p = $('atrybucja');
+      if (p) p.insertAdjacentHTML('beforeend', ' · ' + bezpiecznie(l.nota));
+    }
+  })();
+
+  /* ═══════════════ start ═══════════════ */
+
+  var s = DANE.swieto;
+
+  /* Paleta z danych nadpisuje domyślną. Barwy Bydgoskiego wyszły ze zdjęć
+     tamtej dzielnicy i nie ma powodu, żeby Chełmińskie je dziedziczyło —
+     ma własny plakat i własne pocztówki. Kod nie zna żadnej z tych palet,
+     tylko wpisuje to, co dostał. */
+  if (s.paleta) {
+    for (var zmienna in s.paleta) {
+      if (Object.prototype.hasOwnProperty.call(s.paleta, zmienna)) {
+        document.documentElement.style.setProperty('--' + zmienna, s.paleta[zmienna]);
+      }
+    }
+  }
+
+  $('tytul').textContent = s.nazwa;
+  document.title = s.nazwa;
+  /* Przy jednodniowym święcie pod tytułem ma stać termin, nie dzielnica.
+     Kto otwiera mapę Chełmionki, wie, że jest na Chełmińskim — nie musi
+     natomiast wiedzieć, że rzecz trwa trzy godziny i kończy się o 15. */
+  var MIESIACE = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+                  'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+  function terminSkrotem() {
+    if (!s.dni || s.dni.length !== 1) return null;
+    var d = s.dni[0], cz = d.data.split('-');
+    return d.nazwa + ' ' + (+cz[2]) + ' ' + MIESIACE[+cz[1] - 1] +
+           (s.godziny ? ', ' + s.godziny.replace('-', '–') : '');
+  }
+  $('podtytul').textContent = terminSkrotem() || (s.dzielnica + ', ' + s.miasto);
+
+  /** Prostokąt obejmujący piny, w jednostkach płótna. Null, gdy pinów nie ma. */
+  function ramkaPinow() {
+    if (!piny.length) return null;
+    var minX = Infinity, minY = Infinity, maksX = -Infinity, maksY = -Infinity;
+    piny.forEach(function (p) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maksX) maksX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maksY) maksY = p.y;
+    });
+    return { x: minX, y: minY, w: Math.max(1, maksX - minX), h: Math.max(1, maksY - minY) };
+  }
+
+  function przelicz(pierwszy) {
+    var poprzednie = kDopasowane;
+    dopasuj();
+    // Przy 'auto' zmiana rozmiaru okna może przechylić szalę na drugą orientację.
+    if (wyborOrientacji === 'auto') {
+      var chciana = skalaPrzy(true) >= skalaPrzy(false);
+      if (chciana !== OBROT) { zastosujOrientacje(chciana, !pierwszy); return; }
+    }
+    if (pierwszy) {
+      /* Domyślnie kadrujemy całe płótno. Ale gdy święto zajmuje ułamek wycinka —
+         na Chełmińskim stoiska mieszczą się w 67 x 73 m wewnątrz kadru 147 x 154 —
+         otwieranie na całości robi z pinów jedną plamę w środku ekranu.
+         `kadrPoczatkowy: 'lokalizacje'` każe zacząć od tego, co się dzieje,
+         a nie od tego, co pobraliśmy. Mapa dalej jest cała, tylko dalej. */
+      var ramka = (DANE.swieto.kadrPoczatkowy === 'lokalizacje') && ramkaPinow();
+      if (ramka) {
+        k = Math.min(wPx / ramka.w, hPx / ramka.h) * 0.86;
+        k = Math.min(kDopasowane * 9, Math.max(kDopasowane, k));
+        tx = wPx / 2 - (ramka.x + ramka.w / 2) * k;
+        ty = hPx / 2 - (ramka.y + ramka.h / 2) * k;
+      } else {
+        k = kDopasowane;
+        tx = (wPx - PLOTNO.w * k) / 2;
+        ty = (hPx - PLOTNO.h * k) / 2;
+      }
+    } else if (poprzednie > 0) {
+      k *= kDopasowane / poprzednie;
+    }
+    rysuj();
+  }
+
+  // Orientacja musi być znana przed pierwszym rysowaniem geometrii,
+  // bo obrót jest wliczony w rzutowanie.
+  dopasuj();
+  OBROT = najlepszaOrientacja();
+  ustawPlotno();
+  rysujPodklad();
+  nazwyUlic();
+  zbudujPiny();
+  zbudujZnaczniki();
+  odswiezPrzyciskObrotu();
+
+  odswiezPiny();
+  odswiezTrase();
+  odswiezPasek();
+  przelicz(true);
+  addEventListener('resize', function () { przelicz(false); });
+})();
+</script>
+</body>
+</html>
